@@ -18,8 +18,18 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends build-essential linux-headers-armmp
 
-kver="$(basename "$(find /lib/modules -mindepth 1 -maxdepth 1 -type d | head -1)")"
-[[ -n "$kver" ]] || { printf 'error: no /lib/modules entry\n' >&2; exit 1; }
+# Installing the headers meta package can pull a newer linux-image-armmp than
+# the one mmdebstrap installed, because trixie keeps only the current kernel.
+# Build against the newest kernel in /boot, not whatever happens to be first
+# in /lib/modules.
+kver="$(basename "$(ls -1 /boot/vmlinuz-* | sort -V | tail -1)")"
+kver="${kver#vmlinuz-}"
+[[ -n "$kver" ]] || { printf 'error: no kernel in /boot\n' >&2; exit 1; }
+if [[ ! -e "/lib/modules/$kver/build" ]]; then
+  apt-get install -y --no-install-recommends "linux-headers-$kver"
+fi
+[[ -e "/lib/modules/$kver/build" ]] ||
+  { printf 'error: no headers for %s\n' "$kver" >&2; exit 1; }
 
 cat > "$extras/ch7033/Makefile" <<'EOF'
 obj-m += ch7033.o
@@ -32,9 +42,10 @@ depmod -a "$kver"
 printf 'ch7033\n' > /etc/modules-load.d/ch7033.conf
 
 apt-get purge -y build-essential linux-headers-armmp
-apt-get autoremove -y
+apt-get autoremove --purge -y
 apt-get clean
 rm -rf /var/lib/apt/lists/*
+update-initramfs -u -k all
 
 # The PocketCHIP console keymap is for the TCA8418 matrix keyboard. A desktop
 # CHIP uses a USB keyboard, which must keep the default layout.
