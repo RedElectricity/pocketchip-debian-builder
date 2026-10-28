@@ -52,7 +52,8 @@ install -m 0755 "$extras/sunvox/sunvox_lofi" /usr/local/bin/sunvox
 # battery, and this daemon writes to the same I2C device.
 apt-get update
 apt-get install -y --no-install-recommends build-essential libx11-dev libxext-dev
-gcc "$extras/batt/pocketchip-one.c" -lX11 -lXext -o /usr/sbin/pocketchip-one
+gcc -std=gnu11 "$extras/batt/pocketchip-one.c" -lX11 -lXext \
+  -o /usr/sbin/pocketchip-one
 chmod 0755 /usr/sbin/pocketchip-one
 apt-get purge -y build-essential libx11-dev libxext-dev
 apt-get autoremove -y

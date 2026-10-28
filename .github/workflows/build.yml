@@ -152,9 +152,9 @@ jobs:
 
       - name: Compress image
         run: |
+          sudo chown -R "$(id -u):$(id -g)" build/images
           image="$(find build/images -maxdepth 1 -name '*.img' -print -quit)"
-          sudo zstd -T0 -19 -q --rm "$image"
-          sudo chown "$(id -u):$(id -g)" "$image.zst"
+          zstd -T0 -19 -q --rm "$image"
           (cd "$(dirname "$image")" && sha256sum "$(basename "$image").zst" > "$(basename "$image").zst.sha256")
           ls -lh build/images
 

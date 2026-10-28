@@ -101,7 +101,17 @@ install -m 0755 "$sunvox_bin" "$out/sunvox/sunvox_lofi"
 # compiler ABI.
 clone_repo "$batt_repo" "$work/pocketchip-batt" "$batt_ref"
 install -d "$out/batt"
-cp -a "$work/pocketchip-batt/pocketchip-one.c" "$out/batt/"
+# pocketchip-one.c predates modern libc headers and relies on transitive
+# includes; GCC 14 treats the resulting implicit declarations as errors.
+{
+  printf '%s\n' \
+    '#include <unistd.h>' \
+    '#include <sys/ioctl.h>' \
+    '#include <sys/stat.h>' \
+    '#include <stdlib.h>' \
+    '#include <string.h>'
+  cat "$work/pocketchip-batt/pocketchip-one.c"
+} > "$out/batt/pocketchip-one.c"
 cp -a "$work/pocketchip-batt/pocketchip-one.service" "$out/batt/"
 
 printf 'prepared %s extras in %s\n' "$variant" "$out"
