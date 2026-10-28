@@ -110,6 +110,10 @@ Before publishing or tagging a release, run:
 make publish-check
 ```
 
+## Image Variants
+
+This fork ships two CI-built flavours: a PocketCHIP image with [awesome](https://awesomewm.org/) plus [pocketchip-menu](https://github.com/omgmog/pocketchip-menu) as the home screen, PICO-8 and SunVox, and a Desktop CHIP image with XFCE on the HDMI adapter. `.github/workflows/build.yml` builds both on GitHub Actions and publishes the USB rootfs image, U-Boot and DTBs. See `docs/variants.md` for the build matrix, variant details, flashing steps, and the macOS FEL caveat.
+
 ## Project Layout
 
 - `scripts/`: host checks, upstream checkout, rootfs build, DT overlay build,

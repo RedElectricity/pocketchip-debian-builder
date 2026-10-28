@@ -8,3 +8,4 @@ __pycache__/
 *.dtbo
 *.tmp
 .local/
+.upstreams/

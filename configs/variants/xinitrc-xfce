@@ -1,0 +1,20 @@
+#!/bin/sh
+# Desktop CHIP variant: plain XFCE session.
+
+if [ -r /etc/default/pocketchip-ui ]; then
+  # shellcheck disable=SC1091
+  . /etc/default/pocketchip-ui
+fi
+
+if [ "${POCKETCHIP_DARK_MODE:-1}" = 1 ]; then
+  export GTK_THEME="${GTK_THEME:-Adwaita:dark}"
+  export GTK_APPLICATION_PREFER_DARK_THEME=1
+fi
+
+[ -r "$HOME/.Xresources" ] && xrdb -merge "$HOME/.Xresources"
+
+# A desktop CHIP is mains-powered in normal use; keep the screen on.
+xset s off 2>/dev/null || true
+xset -dpms 2>/dev/null || true
+
+exec startxfce4

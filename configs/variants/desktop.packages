@@ -1,0 +1,8 @@
+# Desktop CHIP variant: XFCE session on the HDMI adapter.
+
+xfce4
+xfce4-terminal
+xfce4-power-manager
+dbus-x11
+mousepad
+pcmanfm

@@ -1,0 +1,20 @@
+# PocketCHIP variant: pygame home launcher on top of the base image.
+
+# Window manager for the launcher. i3 stays installed as a fallback session.
+awesome
+
+# pocketchip-menu runtime.
+python3-pygame
+python3-dbus
+python3-gi
+unclutter
+upower
+libsdl2-2.0-0
+libsdl2-image-2.0-0
+libgl1
+libegl1
+libgles2
+
+# Applications referenced by the launcher's app grid.
+pcmanfm
+mousepad

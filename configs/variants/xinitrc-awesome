@@ -1,0 +1,30 @@
+#!/bin/sh
+# PocketCHIP variant: awesome hosts the pocketchip-menu home screen.
+
+if [ -r /etc/default/pocketchip-ui ]; then
+  # shellcheck disable=SC1091
+  . /etc/default/pocketchip-ui
+fi
+
+if [ "${POCKETCHIP_DARK_MODE:-1}" = 1 ]; then
+  export GTK_THEME="${GTK_THEME:-Adwaita:dark}"
+  export GTK_APPLICATION_PREFER_DARK_THEME=1
+fi
+
+[ -r "$HOME/.Xresources" ] && xrdb -merge "$HOME/.Xresources"
+[ -r "$HOME/.Xmodmap" ] && xmodmap "$HOME/.Xmodmap"
+
+if [ "${POCKETCHIP_LOGIN_SPLASH:-0}" = 1 ] &&
+   [ -x /usr/local/bin/pocketchip-splash ]; then
+  pocketchip-splash login
+fi
+
+xset s 600 600 2>/dev/null || true
+xset +dpms 2>/dev/null || true
+xset dpms 600 600 600 2>/dev/null || true
+
+if command -v unclutter >/dev/null 2>&1; then
+  unclutter -idle 1 -root &
+fi
+
+exec awesome

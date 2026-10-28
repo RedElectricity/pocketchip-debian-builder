@@ -12,6 +12,8 @@ size_mb="${SIZE_MB:-4096}"
 label="${ROOT_LABEL:-pocketroot}"
 dtbo="${DTBO:-$build_dir/dtbo/pocketchip-v73-mainline.dtbo}"
 merged_dtb="${MERGED_DTB:-$build_dir/dtbo/sun5i-r8-pocketchip.dtb}"
+dtb_name="${DTB_NAME:-sun5i-r8-pocketchip.dtb}"
+menu_label="${MENU_LABEL:-Debian $suite PocketCHIP USB rootfs}"
 
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
   printf 'error: build-usb-image.sh must run as root for loop devices and mounts.\n' >&2
@@ -156,8 +158,8 @@ if [[ ! -f "$mount_dir/boot/$initrd" ]]; then
 fi
 
 if [[ -f "$merged_dtb" ]]; then
-  install -m 0644 "$merged_dtb" "$mount_dir/boot/sun5i-r8-pocketchip.dtb"
-  dtb_path="/boot/sun5i-r8-pocketchip.dtb"
+  install -m 0644 "$merged_dtb" "$mount_dir/boot/$dtb_name"
+  dtb_path="/boot/$dtb_name"
 else
   printf 'warning: merged PocketCHIP DTB not found at %s; falling back to base CHIP DTB.\n' "$merged_dtb" >&2
   printf '         Run ./scripts/build-pocketchip-dtbo.sh before building the image for LCD/keyboard DT support.\n' >&2
@@ -175,7 +177,7 @@ TIMEOUT 30
 PROMPT 1
 
 LABEL debian
-  MENU LABEL Debian $suite PocketCHIP USB rootfs
+  MENU LABEL $menu_label
   LINUX /boot/$kernel
   INITRD /boot/$initrd
   FDT $dtb_path

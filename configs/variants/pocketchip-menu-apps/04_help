@@ -1,0 +1,3 @@
+title=Help
+icon=help.png
+execute=firefox-esr --kiosk https://chip.guide

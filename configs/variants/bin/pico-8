@@ -1,0 +1,4 @@
+#!/bin/sh
+# PICO-8 needs its data file next to the binary, so always start from /usr/lib/pico-8.
+cd /usr/lib/pico-8 || exit 1
+exec ./pico8 "$@"

@@ -31,6 +31,9 @@ security_mirror="${SECURITY_MIRROR:-http://security.debian.org/debian-security}"
 build_dir="${BUILD_DIR:-$repo_root/build}"
 rootfs="${ROOTFS:-$build_dir/rootfs-$suite-$arch}"
 packages_file="${PACKAGES_FILE:-$repo_root/configs/debian-trixie-armhf.packages}"
+extra_packages="${POCKETCHIP_EXTRA_PACKAGES:-}"
+extras_dir="${POCKETCHIP_EXTRAS_DIR:-}"
+post_install="${POCKETCHIP_POST_INSTALL:-}"
 install_oh_my_zsh="${INSTALL_OH_MY_ZSH:-1}"
 debian_keyring="${DEBIAN_KEYRING:-$build_dir/keyrings/debian-trixie-archive-keyring.gpg}"
 initramfs_modules_file="${INITRAMFS_MODULES_FILE:-$repo_root/configs/initramfs-modules}"
@@ -275,6 +278,25 @@ case "$pocketchip_login_splash" in
   *) die "POCKETCHIP_LOGIN_SPLASH must be auto, 0, or 1" ;;
 esac
 
+reject_newline POCKETCHIP_EXTRA_PACKAGES "$extra_packages"
+reject_newline POCKETCHIP_EXTRAS_DIR "$extras_dir"
+reject_newline POCKETCHIP_POST_INSTALL "$post_install"
+if [[ -n "$extras_dir" && "$extras_dir" != /* ]]; then
+  extras_dir="$repo_root/$extras_dir"
+fi
+if [[ -n "$post_install" && "$post_install" != /* ]]; then
+  post_install="$repo_root/$post_install"
+fi
+if [[ -n "$extras_dir" && ! -d "$extras_dir" ]]; then
+  die "POCKETCHIP_EXTRAS_DIR does not exist: $extras_dir"
+fi
+if [[ -n "$post_install" && ! -r "$post_install" ]]; then
+  die "POCKETCHIP_POST_INSTALL is not readable: $post_install"
+fi
+if [[ -n "$post_install" && -z "$extras_dir" ]]; then
+  die "POCKETCHIP_POST_INSTALL requires POCKETCHIP_EXTRAS_DIR"
+fi
+
 if [[ "$pocketchip_asset_dir" != /* ]]; then
   pocketchip_asset_dir="$repo_root/$pocketchip_asset_dir"
 fi
@@ -467,6 +489,15 @@ build_package_csv() {
   done < <(awk 'NF && $1 !~ /^#/ { print $1 }' "$packages_file")
 
   for pkg in "${append[@]}"; do
+    if [[ "$seen" != *" $pkg "* ]]; then
+      packages+=("$pkg")
+      seen+="$pkg "
+    fi
+  done
+
+  # Comma- or whitespace-separated additions from the variant layer, so an
+  # image variant can extend the package set without editing the base list.
+  for pkg in ${extra_packages//,/ }; do
     if [[ "$seen" != *" $pkg "* ]]; then
       packages+=("$pkg")
       seen+="$pkg "
@@ -915,6 +946,16 @@ done
 if ! find "$rootfs/usr/lib/linux-image-$version" -type f -name 'sun5i-r8-chip.dtb' -print -quit | grep -q .; then
   printf 'error: rootfs is missing sun5i-r8-chip.dtb for %s.\n' "$version" >&2
   exit 1
+fi
+
+if [[ -n "$post_install" ]]; then
+  rm -rf "$rootfs/opt/pocketchip-extras"
+  install -d -m 0755 "$rootfs/opt"
+  rsync -a "$extras_dir"/ "$rootfs/opt/pocketchip-extras"/
+  install -m 0755 "$post_install" "$rootfs/tmp/pocketchip-post-install.sh"
+  printf '\nRunning variant post-install: %s\n' "$post_install"
+  chroot "$rootfs" /tmp/pocketchip-post-install.sh "$pocketchip_user"
+  rm -f "$rootfs/tmp/pocketchip-post-install.sh"
 fi
 
 trap - EXIT
