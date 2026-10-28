@@ -88,7 +88,26 @@ sudo env SIZE_MB=4096 \
 
 U-Boot then boots the kernel and initrd from the USB rootfs. Keep a 3.3 V UART adapter attached for the first boot.
 
-On macOS there is no Homebrew `sunxi-tools` formula. Either build `sunxi-tools` from source against `brew install libusb`/`dtc`, or run the FEL step from a Linux machine or VM. Docker Desktop on macOS cannot pass USB devices into a container, so a container is not a shortcut for this step.
+On macOS there is no Homebrew `sunxi-tools` formula. Docker Desktop cannot pass USB devices into a container, so a container is not a shortcut for this step either.
+
+### macOS FEL toolchain
+
+`sunxi-fel` needs both libusb and libfdt. With Homebrew's `libusb` present, build a static libfdt from dtc and link it statically:
+
+```sh
+mkdir -p ~/.local/src ~/.local/bin
+
+git clone --depth 1 https://git.kernel.org/pub/scm/utils/dtc/dtc.git ~/.local/src/dtc
+make -C ~/.local/src/dtc NO_PYTHON=1 NO_YAML=1 WARNINGS= libfdt/libfdt.a
+
+git clone --depth 1 https://github.com/linux-sunxi/sunxi-tools.git ~/.local/src/sunxi-tools
+make -C ~/.local/src/sunxi-tools sunxi-fel \
+  LIBFDT_CFLAGS="-I$HOME/.local/src/dtc/libfdt" \
+  LIBFDT_LIBS="$HOME/.local/src/dtc/libfdt/libfdt.a"
+install -m 0755 ~/.local/src/sunxi-tools/sunxi-fel ~/.local/bin/
+```
+
+Make sure `~/.local/bin` is on `PATH`, then verify with `sunxi-fel` (it prints usage without a device). `sunxi-fel version` only works once a device is in FEL mode.
 
 ## Variant notes
 
