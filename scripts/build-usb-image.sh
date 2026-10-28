@@ -77,7 +77,13 @@ for module in "${required_initrd_modules[@]}"; do
   fi
 done
 
-if ! find "$rootfs/usr/lib/linux-image-$version" -type f -name 'sun5i-r8-chip.dtb' -print -quit | grep -q .; then
+# Kernel 6.x installs DTBs under /usr/lib/linux-image-<ver>; the 7.x Debian
+# packaging moved them to /usr/lib/modules/<ver>/dtb. Accept either layout.
+kernel_dtb_dirs=(
+  "$rootfs/usr/lib/linux-image-$version"
+  "$rootfs/usr/lib/modules/$version/dtb"
+)
+if ! find "${kernel_dtb_dirs[@]}" -type f -name 'sun5i-r8-chip.dtb' -print -quit 2>/dev/null | grep -q .; then
   printf 'error: rootfs is incomplete: missing sun5i-r8-chip.dtb for %s.\n' "$version" >&2
   exit 1
 fi
@@ -163,7 +169,9 @@ if [[ -f "$merged_dtb" ]]; then
 else
   printf 'warning: merged PocketCHIP DTB not found at %s; falling back to base CHIP DTB.\n' "$merged_dtb" >&2
   printf '         Run ./scripts/build-pocketchip-dtbo.sh before building the image for LCD/keyboard DT support.\n' >&2
-  dtb="$(find "$mount_dir/usr/lib/linux-image-$version" -type f -name 'sun5i-r8-chip.dtb' -print -quit 2>/dev/null || true)"
+  dtb="$(find "$mount_dir/usr/lib/linux-image-$version" \
+    "$mount_dir/usr/lib/modules/$version/dtb" \
+    -type f -name 'sun5i-r8-chip.dtb' -print -quit 2>/dev/null || true)"
   if [[ -z "$dtb" ]]; then
     printf 'error: could not find sun5i-r8-chip.dtb for %s.\n' "$version" >&2
     exit 1

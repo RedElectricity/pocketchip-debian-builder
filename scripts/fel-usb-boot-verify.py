@@ -207,10 +207,12 @@ def main() -> int:
             print("error: could not infer vmlinuz/initrd names from /boot listing.", file=sys.stderr)
             return 1
 
+        # Debian 7.x kernels moved the packaged DTBs from
+        # /usr/lib/linux-image-<ver> to /usr/lib/modules/<ver>/dtb.
         fdt_path = (
             "/boot/sun5i-r8-pocketchip.dtb"
             if "sun5i-r8-pocketchip.dtb" in boot_listing
-            else f"/usr/lib/linux-image-{version}/sun5i-r8-chip.dtb"
+            else f"/usr/lib/modules/{version}/dtb/sun5i-r8-chip.dtb"
         )
         manual = [
             "setenv bootargs console=ttyS0,115200 root=LABEL=pocketroot rootwait rw loglevel=4",
