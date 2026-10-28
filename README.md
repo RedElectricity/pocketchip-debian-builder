@@ -28,7 +28,7 @@ PocketCHIP image and builder.
 
 - Debian: the root filesystem is built from Debian 13/Trixie `armhf` packages.
   It is a Debian-based device image, with PocketCHIP-specific integration.
-- Kernel: the image uses Debian's packaged `linux-image-armmp` from `trixie-backports` (currently the 7.2 stable series), so it is mainline-based with Debian configuration and packaging. Set `KERNEL_SUITE` to override the suite.
+- Kernel: the image uses Debian's packaged `linux-image-armmp` from the base suite (trixie's 6.12 LTS), so it is mainline-based with Debian configuration and packaging. Set `KERNEL_SUITE` to override the suite; the 7.x series from `trixie-backports` is not compatible with the SLC-mode NAND layout on this hardware.
 - U-Boot for FEL/USB: the USB development path uses mainline U-Boot.
 - U-Boot for NAND: the tested NAND/SLC path uses patched legacy CHIP U-Boot,
   because NAND boot support still depends on CHIP-specific legacy code.
@@ -128,7 +128,7 @@ This fork ships two CI-built flavours: a PocketCHIP image with [awesome](https:/
 ## Current Target
 
 - OS: Debian 13/trixie `armhf`
-- Kernel: Debian `linux-image-armmp` from `trixie-backports` (7.2.x stable series), a Debian-packaged mainline-based ARM kernel. `KERNEL_SUITE` selects another suite; `KERNEL_SUITE=none` keeps trixie's 6.12 kernel.
+- Kernel: Debian `linux-image-armmp` from trixie (6.12 LTS), a Debian-packaged mainline-based ARM kernel. `KERNEL_SUITE` selects another suite; the 7.x series from `trixie-backports` breaks SLC-mode NAND boot.
 - Boot: mainline U-Boot for FEL/USB bring-up with USB rootfs by label
   `pocketroot`; patched legacy CHIP U-Boot for the experimental NAND/SLC rescue
   installer path.

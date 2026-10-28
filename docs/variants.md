@@ -12,7 +12,7 @@ This fork adds two prebuilt image flavours on top of the upstream builder. Both 
 
 The image is a USB root filesystem: write it to a USB drive, put the drive in the CHIP USB host port, then boot the board through FEL with the matching U-Boot binary. Nothing is written to NAND.
 
-Both variants install the kernel from `trixie-backports` (Debian's 7.2 stable series at the time of writing) instead of trixie's 6.12 LTS kernel. The userland stays on trixie; only the kernel packages are pinned. Set `KERNEL_SUITE` in the environment, or the `POCKETCHIP_KERNEL_SUITE` repository variable in Actions, to another suite such as `sid`; set it to `none` to keep the base suite's kernel. The base package set already includes `openssh-server` (enabled at boot), `openssh-client`, NetworkManager, `git`, `tmux`, `neovim`/`vim`, `curl`/`wget`, `htop`, `rsync`, `zstd`, `zip`/`unzip`, and the usual diagnostics.
+Both variants install the kernel from the base suite (trixie's 6.12 LTS). The 7.x kernel from `trixie-backports` is not usable here: its rewritten sunxi NAND driver misreads the SLC-mode UBI volume and boot hangs on a UBIFS ECC error, so the backports kernel stays opt-in. Set `KERNEL_SUITE` in the environment, or the `POCKETCHIP_KERNEL_SUITE` repository variable in Actions, to another suite such as `sid`; `none` explicitly selects the base suite's kernel. The base package set already includes `openssh-server` (enabled at boot), `openssh-client`, NetworkManager, `git`, `tmux`, `neovim`/`vim`, `curl`/`wget`, `htop`, `rsync`, `zstd`, `zip`/`unzip`, and the usual diagnostics.
 
 ## Building in GitHub Actions
 
@@ -23,7 +23,7 @@ Each job produces two artifacts:
 - `image-<variant>`: `build/images/<variant>-debian-trixie-armhf.img.zst` and its `.sha256`.
 - `boot-<variant>`: `u-boot-sunxi-with-spl.bin` plus the built DTBs/DTBOs.
 
-The workflow installs `qemu-user-static` and registers `qemu-arm` binfmt so the armhf chroot can run package maintainer scripts on the x86 runner. Upstream checkouts (U-Boot, CHIP-linux, CHIP-dt-overlays, ...) are cached between runs. Repository variable `POCKETCHIP_TIMEZONE` overrides the default `Asia/Shanghai`, and `POCKETCHIP_KERNEL_SUITE` overrides the default `trixie-backports` kernel suite.
+The workflow installs `qemu-user-static` and registers `qemu-arm` binfmt so the armhf chroot can run package maintainer scripts on the x86 runner. Upstream checkouts (U-Boot, CHIP-linux, CHIP-dt-overlays, ...) are cached between runs. Repository variable `POCKETCHIP_TIMEZONE` overrides the default `Asia/Shanghai`, and `POCKETCHIP_KERNEL_SUITE` overrides the default `none` kernel suite selection (the base suite's kernel).
 
 ## Building locally
 

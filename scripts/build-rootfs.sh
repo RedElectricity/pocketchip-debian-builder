@@ -25,11 +25,11 @@ if [[ "$use_local_env" == 1 && -r "$local_env" ]]; then
 fi
 
 suite="${SUITE:-trixie}"
-# Debian trixie pins the 6.12 LTS kernel. By default pull linux-image-armmp
-# from trixie-backports so the images follow the current stable series while
-# the rest of the userland stays on trixie. Set KERNEL_SUITE=none to keep the
-# base suite's kernel, or name another suite (e.g. sid) to override.
-kernel_suite="${KERNEL_SUITE:-trixie-backports}"
+# Default to the base suite's kernel (trixie ships 6.12 LTS). The sunxi NAND
+# driver was rewritten in 7.x and misreads the SLC-mode UBI volume on this
+# hardware, so the backports kernel is opt-in only. Set KERNEL_SUITE to another
+# suite (e.g. trixie-backports or sid) to override.
+kernel_suite="${KERNEL_SUITE:-none}"
 if [[ "$kernel_suite" == none ]]; then
   kernel_suite=""
 fi

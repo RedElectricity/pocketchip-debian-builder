@@ -62,7 +62,7 @@ jobs:
     env:
       VARIANT: ${{ matrix.variant }}
       UPSTREAMS_DIR: ${{ github.workspace }}/../upstreams
-      KERNEL_SUITE: ${{ vars.POCKETCHIP_KERNEL_SUITE || 'trixie-backports' }}
+      KERNEL_SUITE: ${{ vars.POCKETCHIP_KERNEL_SUITE || 'none' }}
     steps:
       - uses: actions/checkout@v4
 
