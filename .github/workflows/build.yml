@@ -62,6 +62,7 @@ jobs:
     env:
       VARIANT: ${{ matrix.variant }}
       UPSTREAMS_DIR: ${{ github.workspace }}/../upstreams
+      KERNEL_SUITE: ${{ vars.POCKETCHIP_KERNEL_SUITE || 'trixie-backports' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -128,6 +129,7 @@ jobs:
         run: |
           extra="$(grep -vE '^[[:space:]]*(#|$)' "configs/variants/${VARIANT}.packages" | tr '\n' ' ')"
           sudo env \
+            KERNEL_SUITE="$KERNEL_SUITE" \
             POCKETCHIP_EXTRA_PACKAGES="$extra" \
             POCKETCHIP_EXTRAS_DIR="$PWD/build/extras" \
             POCKETCHIP_POST_INSTALL="$PWD/scripts/variants/${VARIANT}-post-install.sh" \

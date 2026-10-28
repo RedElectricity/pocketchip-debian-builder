@@ -25,6 +25,14 @@ if [[ "$use_local_env" == 1 && -r "$local_env" ]]; then
 fi
 
 suite="${SUITE:-trixie}"
+# Debian trixie pins the 6.12 LTS kernel. By default pull linux-image-armmp
+# from trixie-backports so the images follow the current stable series while
+# the rest of the userland stays on trixie. Set KERNEL_SUITE=none to keep the
+# base suite's kernel, or name another suite (e.g. sid) to override.
+kernel_suite="${KERNEL_SUITE:-trixie-backports}"
+if [[ "$kernel_suite" == none ]]; then
+  kernel_suite=""
+fi
 arch="${ARCH:-armhf}"
 mirror="${MIRROR:-http://deb.debian.org/debian}"
 security_mirror="${SECURITY_MIRROR:-http://security.debian.org/debian-security}"
@@ -343,6 +351,7 @@ esac
 
 if [[ "$print_defaults" == 1 ]]; then
   printf 'SUITE=%s\n' "$suite"
+  printf 'KERNEL_SUITE=%s\n' "$kernel_suite"
   printf 'ARCH=%s\n' "$arch"
   printf 'POCKETCHIP_IMAGE_PROFILE=%s\n' "$pocketchip_image_profile"
   printf 'POCKETCHIP_ROOT_AUTH=%s\n' "$pocketchip_root_auth"
@@ -530,6 +539,26 @@ deb $mirror $suite main contrib non-free-firmware
 deb $mirror $suite-updates main contrib non-free-firmware
 deb $security_mirror $suite-security main contrib non-free-firmware
 EOF
+
+if [[ -n "$kernel_suite" ]]; then
+  if [[ ! "$kernel_suite" =~ ^[a-z0-9][a-z0-9.-]*$ ]]; then
+    die "invalid KERNEL_SUITE '$kernel_suite'"
+  fi
+  printf 'deb %s %s main contrib non-free-firmware\n' "$mirror" "$kernel_suite" \
+    >> "$rootfs/etc/apt/sources.list"
+  install -d -m 0755 "$rootfs/etc/apt/preferences.d"
+  cat > "$rootfs/etc/apt/preferences.d/90-linux-kernel" <<EOF
+# Track $kernel_suite for the kernel packages only. Debian marks backports
+# NotAutomatic, so this pin is what lets apt upgrade the kernel at all.
+Package: linux-image-* linux-headers-* linux-kbuild-* linux-base linux-base-* linux-binary-* linux-modules-* linux-image-armmp linux-headers-armmp
+Pin: release n=$kernel_suite
+Pin-Priority: 990
+EOF
+  printf '\nInstalling the kernel from %s\n' "$kernel_suite"
+  chroot "$rootfs" apt-get update
+  chroot "$rootfs" env DEBIAN_FRONTEND=noninteractive \
+    apt-get -y --auto-remove -t "$kernel_suite" install linux-image-armmp
+fi
 
 printf 'pocketchip\n' > "$rootfs/etc/hostname"
 cat > "$rootfs/etc/hosts" <<'EOF'
@@ -812,6 +841,17 @@ cat > "$rootfs/etc/ssh/sshd_config.d/50-pocketchip-root.conf" <<'EOF'
 PermitRootLogin no
 EOF
 
+# openssh-server ships both ssh.service and ssh.socket. Enable the service
+# explicitly instead of relying on the maintainer script having run against a
+# live systemd, and drop a socket-activation symlink if the package preset
+# created one; otherwise both units race for port 22.
+if [[ -e "$rootfs/usr/lib/systemd/system/ssh.service" ]]; then
+  install -d -m 0755 "$rootfs/etc/systemd/system/multi-user.target.wants"
+  ln -sfn /usr/lib/systemd/system/ssh.service \
+    "$rootfs/etc/systemd/system/multi-user.target.wants/ssh.service"
+  rm -f "$rootfs/etc/systemd/system/sockets.target.wants/ssh.socket"
+fi
+
 install -d -m 0755 "$rootfs/etc/fonts/conf.d"
 install -m 0644 "$repo_root/configs/fontconfig-pocketchip-terminal.conf" \
   "$rootfs/etc/fonts/conf.d/60-pocketchip-terminal.conf"
@@ -943,7 +983,13 @@ for module in "${required_initrd_modules[@]}"; do
   fi
 done
 
-if ! find "$rootfs/usr/lib/linux-image-$version" -type f -name 'sun5i-r8-chip.dtb' -print -quit | grep -q .; then
+# Kernel 6.x installs DTBs under /usr/lib/linux-image-<ver>; the 7.x Debian
+# packaging moved them to /usr/lib/modules/<ver>/dtb. Accept either layout.
+kernel_dtb_dirs=(
+  "$rootfs/usr/lib/linux-image-$version"
+  "$rootfs/usr/lib/modules/$version/dtb"
+)
+if ! find "${kernel_dtb_dirs[@]}" -type f -name 'sun5i-r8-chip.dtb' -print -quit 2>/dev/null | grep -q .; then
   printf 'error: rootfs is missing sun5i-r8-chip.dtb for %s.\n' "$version" >&2
   exit 1
 fi

@@ -74,10 +74,20 @@ xdotool
 # Pocket terminal workflow
 git
 neovim
+vim
 tmux
 zsh
 zsh-autosuggestions
 zsh-syntax-highlighting
+
+# Common command-line extras
+bash-completion
+man-db
+pciutils
+wget
+xz-utils
+zip
+zstd
 
 # Audio/display/desktop
 alsa-utils
