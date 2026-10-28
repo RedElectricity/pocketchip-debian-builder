@@ -77,8 +77,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            bc binfmt-support bison build-essential curl device-tree-compiler \
-            e2fsprogs flex gcc-arm-linux-gnueabihf git gnupg libgnutls28-dev \
+            arch-test bc binfmt-support bison build-essential curl \
+            device-tree-compiler e2fsprogs flex gcc-arm-linux-gnueabihf git \
+            gnupg libgnutls28-dev \
             libssl-dev make mmdebstrap openssl python3 python3-pil qemu-user-static \
             rsync sunxi-tools swig u-boot-tools unzip util-linux xz-utils zstd
 
@@ -110,7 +111,7 @@ jobs:
           if [ "$VARIANT" = pocketchip ]; then
             ./scripts/build-pocketchip-dtbo.sh
           else
-            SOURCE_DTSO="$UPSTREAMS_DIR/CHIP-dt-overlays/nextthingco/dip-hdmi.dts" \
+            SOURCE_DTSO="$PWD/dts/chip-hdmi.dts" \
             OUT_DTBO="$PWD/build/dtbo/dip-hdmi.dtbo" \
             OUT_DTB="$PWD/build/dtbo/sun5i-r8-chip-hdmi.dtb" \
               ./scripts/build-pocketchip-dtbo.sh

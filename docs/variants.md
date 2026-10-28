@@ -50,7 +50,7 @@ sudo env SIZE_MB=4096 \
 For the Desktop CHIP variant, replace the DT steps with the HDMI overlay and use the desktop package list and post-install script:
 
 ```sh
-SOURCE_DTSO="$PWD/../upstreams/CHIP-dt-overlays/nextthingco/dip-hdmi.dts" \
+SOURCE_DTSO="$PWD/dts/chip-hdmi.dts" \
 OUT_DTBO="$PWD/build/dtbo/dip-hdmi.dtbo" \
 OUT_DTB="$PWD/build/dtbo/sun5i-r8-chip-hdmi.dtb" \
   ./scripts/build-pocketchip-dtbo.sh
@@ -106,6 +106,7 @@ On macOS there is no Homebrew `sunxi-tools` formula. Either build `sunxi-tools` 
 - The PocketCHIP console keymap service is masked, because it would remap a USB keyboard with the matrix-keyboard layout.
 - The PocketCHIP touch calibration Xorg snippet is removed.
 - Debian's `linux-image-armmp` does **not** enable `CONFIG_DRM_I2C_CH7033`, the driver for the CHIP HDMI adapter bridge, and it also leaves the dumb VGA bridge driver off. The image therefore builds the upstream `chrontel-ch7033.c` as an out-of-tree module against the installed `linux-headers-armmp` and loads it through `/etc/modules-load.d/ch7033.conf`. This path is untested on hardware; verify it with a UART console before relying on HDMI.
+- `dts/chip-hdmi.dts` is a local copy of the upstream overlay with two fixes for mainline: the pinmux label is `i2c1_pins` (upstream still says `i2c1_pins_a`) and the alias points at `/soc/i2c@1c2b000`. The upstream overlay fails to apply with `FDT_ERR_NOTFOUND` on current U-Boot/kernel device trees.
 - The CH7033 HDMI bridge does not always provide usable EDID. If the panel comes up at the wrong size, set the mode once from an XFCE terminal:
 
   ```sh
