@@ -16,7 +16,10 @@ batt_repo="${BATT_REPO:-https://github.com/aleh/pocketchip-batt.git}"
 batt_ref="${BATT_REF:-}"
 pico8_url="${PICO8_URL:-https://www.lexaloffle.com/dl/chip/pico-8_0.2.4_chip.zip}"
 sunvox_url="${SUNVOX_URL:-https://warmplace.ru/soft/sunvox/sunvox-2.1.4d.zip}"
-ch7033_url="${CH7033_URL:-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/drivers/gpu/drm/bridge/chrontel-ch7033.c?h=v6.12}"
+# Match the driver to the default backports kernel series. Override CH7033_URL
+# when building against a different kernel (for example with KERNEL_SUITE=none
+# and the 6.12 kernel).
+ch7033_url="${CH7033_URL:-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/drivers/gpu/drm/bridge/chrontel-ch7033.c?h=v7.2}"
 
 die() {
   printf 'error: %s\n' "$*" >&2
