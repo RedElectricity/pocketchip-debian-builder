@@ -17,6 +17,10 @@ on:
           - pocketchip
           - desktop
         default: both
+      with_nand:
+        description: Also build the experimental NAND SLC installer (PocketCHIP)
+        type: boolean
+        default: false
   push:
     tags:
       - "v*"
@@ -149,6 +153,35 @@ jobs:
               MENU_LABEL="Debian trixie Desktop CHIP (HDMI)" \
               ./scripts/build-usb-image.sh
           fi
+
+      - name: Install NAND host tooling
+        if: matrix.variant == 'pocketchip' && inputs.with_nand
+        run: |
+          sudo apt-get install -y --no-install-recommends \
+            android-sdk-libsparse-utils autoconf automake gcc-arm-linux-gnueabi \
+            liblzo2-dev libtool mtd-utils pkg-config ripgrep uuid-dev zlib1g-dev
+
+      - name: Build NAND host tools
+        if: matrix.variant == 'pocketchip' && inputs.with_nand
+        run: |
+          ./scripts/build-sunxi-tools-misc.sh
+          ./scripts/build-chip-mtd-utils.sh
+
+      - name: Build legacy NAND U-Boot
+        if: matrix.variant == 'pocketchip' && inputs.with_nand
+        run: make uboot-legacy-mlc-pc-slc
+
+      - name: Build NAND SLC installer image
+        if: matrix.variant == 'pocketchip' && inputs.with_nand
+        run: sudo make nand-image-mlc-pc-slc
+
+      - name: Upload NAND installer
+        if: matrix.variant == 'pocketchip' && inputs.with_nand
+        uses: actions/upload-artifact@v4
+        with:
+          name: nand-pocketchip
+          path: build/nand-slc/images
+          retention-days: 14
 
       - name: Compress image
         run: |
