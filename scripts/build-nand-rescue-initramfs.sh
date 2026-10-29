@@ -355,7 +355,18 @@ WPACONF
   fi
 
   log_rescue "associated; requesting DHCP"
-  busybox udhcpc -i wlan0 -n -q -t 20 -T 3 >/dev/console 2>&1 ||
+  cat > /tmp/udhcpc.script <<'UDHCPC'
+#!/bin/sh
+case "$1" in
+  bound|renew)
+    ip addr flush dev "$interface"
+    ip addr add "$ip/$mask" dev "$interface"
+    [ -n "$router" ] && ip route add default via "$router" 2>/dev/null
+    ;;
+esac
+UDHCPC
+  chmod 0755 /tmp/udhcpc.script
+  busybox udhcpc -i wlan0 -n -q -t 20 -T 3 -s /tmp/udhcpc.script >/dev/console 2>&1 ||
     log_rescue "udhcpc did not get a lease; continuing"
   ipv4="$(ip -4 addr show dev wlan0 2>/dev/null |
     busybox awk '/inet / { sub(/\/.*/, "", $2); print $2; exit }')"
