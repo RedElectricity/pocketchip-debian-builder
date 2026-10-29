@@ -575,6 +575,11 @@ def send_file_to_rescue(args: argparse.Namespace, payload: Path) -> None:
     if sock is None:
         raise RuntimeError(f"timed out connecting to rescue listener at {args.device_ip}:{args.port}")
 
+    # NAND erase/program stalls can exceed several seconds and the receiver
+    # applies TCP backpressure, so bulk sends must not inherit the 5 s
+    # connect timeout.
+    sock.settimeout(None)
+
     sent = 0
     last_report = 0
     print(f"[rescue] streaming {payload} ({total} bytes)")
