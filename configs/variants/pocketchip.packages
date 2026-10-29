@@ -18,3 +18,33 @@ libgles2
 # Applications referenced by the launcher's app grid.
 pcmanfm
 mousepad
+
+# Security toolkit. The PocketCHIP is a handheld field unit, so the image
+# carries a small set of wireless, network, web and firmware tools. Everything
+# here is in trixie armhf; Kali-only packages (metasploit, impacket-scripts,
+# responder, seclists) are not packaged for Debian and stay out.
+aircrack-ng
+arping
+bettercap
+binwalk
+crunch
+dsniff
+ettercap-text-only
+foremost
+gobuster
+hcxdumptool
+hcxtools
+hping3
+john
+macchanger
+masscan
+ncrack
+p0f
+proxychains4
+python3-scapy
+sqlmap
+sslscan
+tcpflow
+testssl.sh
+upx-ucl
+yara

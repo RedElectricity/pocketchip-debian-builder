@@ -123,6 +123,12 @@ Make sure `~/.local/bin` is on `PATH`, then verify with `sunxi-fel` (it prints u
 - `pocketchip-batt` is compiled into the image and its unit is installed, but it is **not enabled**: on a mainline kernel `upower` already reports the AXP209 battery through the kernel driver, and the daemon writes to the same I2C device. Enable it manually with `sudo systemctl enable --now pocketchip-one` if you need the legacy `/usr/lib/pocketchip-batt` files.
 - PICO-8 and SunVox are proprietary binaries downloaded from their upstream URLs at build time. They are not redistributed by this repository.
 
+### Security toolkit
+
+The PocketCHIP image carries a compact security toolkit, because the hardware was designed as a handheld hacking device: `aircrack-ng`, `hcxdumptool`/`hcxtools`, `bettercap`, `ettercap-text-only`, `dsniff`, `tcpflow`, `p0f`, `masscan`, `arping`, `hping3`, `proxychains4`, `python3-scapy`, `sqlmap`, `gobuster`, `sslscan`, `testssl.sh`, `ncrack`, `crunch`, `john`, `binwalk`, `yara`, `foremost`, `upx-ucl` and `macchanger`, on top of the `nmap`, `tcpdump`, `bluez`, `iw` and `wpa_supplicant` already in the base set. The installed delta is roughly 120 MiB.
+
+The onboard RTL8723BS radio is 2.4 GHz only, its staging driver has weak monitor-mode support and no injection, so the wireless tools are only fully useful with a USB adapter that supports monitor mode and injection. `metasploit-framework`, `responder`, `impacket-scripts`, `seclists` and `searchsploit` are Kali packages and are not in Debian armhf; heavier Debian tools such as `wifite`, `tshark`, `whatweb`, `ffuf`, `smbmap`, `python3-impacket`, `hydra`, `medusa`, `sleuthkit`, `testdisk`, `gdb` and `ubertooth` are left out to keep the NAND image inside its budget, and can be added to `configs/variants/pocketchip.packages` when building a USB-only image.
+
 ### Desktop CHIP
 
 - `~/.xinitrc` starts `startxfce4`.
