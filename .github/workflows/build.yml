@@ -160,7 +160,7 @@ jobs:
         if: matrix.variant == 'pocketchip' && inputs.with_nand
         run: |
           sudo apt-get install -y --no-install-recommends \
-            android-sdk-libsparse-utils autoconf automake gcc-arm-linux-gnueabi \
+            android-sdk-libsparse-utils autoconf automake cpio gcc-arm-linux-gnueabi \
             liblzo2-dev libtool mtd-utils pkg-config ripgrep uuid-dev zlib1g-dev
 
       - name: Build NAND host tools
@@ -176,6 +176,13 @@ jobs:
       - name: Build NAND SLC installer image
         if: matrix.variant == 'pocketchip' && inputs.with_nand
         run: sudo make nand-image-mlc-pc-slc
+
+      # U-Boot's fastboot/bad-block path occasionally leaves one uncorrectable
+      # page in the UBI image. The rescue initramfs rewrites UBI from Linux
+      # with ubiformat and is the reliable install path.
+      - name: Build NAND rescue initramfs
+        if: matrix.variant == 'pocketchip' && inputs.with_nand
+        run: sudo make nand-rescue-initramfs-usb-slc
 
       - name: Upload NAND installer
         if: matrix.variant == 'pocketchip' && inputs.with_nand

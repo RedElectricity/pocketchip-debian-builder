@@ -68,10 +68,23 @@ CONFIRM_NAND_WRITE=YES make nand-flash-chip-tools-slc
 
 That stages CHIP-tools at a pinned commit, applies
 `tools/chip-tools-pocketchip.patch`, and runs `chip-update-firmware.sh` against
-`build/nand-slc/images`. `scripts/fel-nand.py` remains for probing,
-bootloader-only writes and the rescue installer. The first flash of a board
-whose saved U-Boot environment predates the `fel_booted`/`scriptaddr` guard
-still needs one `make nand-flash-legacy-slc` run over the UART.
+`build/nand-slc/images`. Its UBI step is not reliable enough for the rootfs:
+U-Boot can report a verified write while Linux later finds an uncorrectable
+page near the end of the UBI image, which surfaces as a black screen during
+boot. Use it for the boot area only and install the rootfs through the rescue
+initramfs:
+
+```sh
+CONFIRM_NAND_WRITE=YES make nand-flash-chip-tools-assets-slc
+CONFIRM_NAND_WRITE=YES make nand-rescue-install-usb-slc
+```
+
+`scripts/fel-nand.py` remains for probing, bootloader-only writes and the
+rescue installer. The first flash of a board whose saved U-Boot environment
+predates the `fel_booted`/`scriptaddr` guard still needs one
+`make nand-flash-legacy-slc` run over the UART. When working from a downloaded
+CI artifact, point `NAND_DIR` at it and extract the rescue payload with
+`make nand-ubi-payload-slc`.
 
 The flash/install commands erase internal NAND and intentionally require an
 explicit confirmation variable plus script-level destructive-write guards.

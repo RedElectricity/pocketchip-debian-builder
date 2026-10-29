@@ -25,17 +25,33 @@ if [[ ! -d "$mountpoint" ]]; then
   exit 1
 fi
 
-if ! findmnt -T "$mountpoint" >/dev/null 2>&1; then
-  printf 'error: %s does not appear to be on a mounted filesystem\n' "$mountpoint" >&2
+if [[ ! -w "$mountpoint" ]]; then
+  printf 'error: %s is not writable\n' "$mountpoint" >&2
   exit 1
 fi
+
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1"
+  else
+    shasum -a 256 "$1"
+  fi
+}
+
+size_of() {
+  if stat --printf='%s' / >/dev/null 2>&1; then
+    stat --printf='%s' "$1"
+  else
+    stat -f %z "$1"
+  fi
+}
 
 dest="$mountpoint/$dest_rel"
 mkdir -p "$(dirname "$dest")"
 install -m 0644 "$payload" "$dest"
-sha256sum "$dest" > "$dest.sha256"
-sync "$mountpoint"
+sha256_of "$dest" > "$dest.sha256"
+sync
 
 printf 'payload %s\n' "$dest"
-printf 'size    %s bytes\n' "$(stat --printf='%s' "$dest")"
+printf 'size    %s bytes\n' "$(size_of "$dest")"
 printf 'sha256  %s\n' "$(awk '{print $1}' "$dest.sha256")"

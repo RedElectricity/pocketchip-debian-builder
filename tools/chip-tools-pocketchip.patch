@@ -57,7 +57,7 @@ index c705c76..26e0dc4 100755
    local tmpdir=`mktemp -d -t chip-uboot-script-XXXXXX`
    local ubootcmds=$tmpdir/uboot.cmds
    local ubootscr=$IMAGESDIR/uboot.scr
-@@ -276,3 +281,142 @@ ready_to_roll() {
+@@ -276,3 +281,149 @@ ready_to_roll() {
  
    return 0
  }
@@ -97,6 +97,9 @@ index c705c76..26e0dc4 100755
 +  local file
 +  for file in "$spl" "$runtime_uboot" "$nand_spl" "$nand_uboot" \
 +              "$boot_kernel" "$boot_dtb" "$boot_initrd" "$sparseubi"; do
++    if [ "$file" = "$sparseubi" ] && [ "${POCKETCHIP_SKIP_UBI:-0}" = 1 ]; then
++      continue
++    fi
 +    if [ ! -f "$file" ]; then
 +      echo "missing $file" >&2
 +      RC=1
@@ -174,7 +177,11 @@ index c705c76..26e0dc4 100755
 +
 +  export FLASH_VID_PID=1f3a1010
 +  if pocketchip_wait_for_fastboot; then
-+    ${FASTBOOT} flash UBI "$sparseubi" || RC=1
++    if [ "${POCKETCHIP_SKIP_UBI:-0}" = 1 ]; then
++      echo "skipping UBI fastboot write; run the Linux rescue installer next"
++    else
++      ${FASTBOOT} flash UBI "$sparseubi" || RC=1
++    fi
 +    ${FASTBOOT} continue > /dev/null || true
 +  else
 +    echo "failed to flash the UBI image" >&2

@@ -47,8 +47,12 @@ required=(
   "boot-zImage-$suffix.bin"
   "boot-sun5i-r8-chip-$suffix.dtb"
   "boot-initrd-$suffix.uimage"
-  "chip-$suffix.ubi.sparse"
 )
+# The Linux rescue installer rewrites UBI with ubiformat/ubiupdatevol, so a
+# boot-assets-only pass does not need the sparse UBI image.
+if [[ "${POCKETCHIP_SKIP_UBI:-}" != "1" ]]; then
+  required+=("chip-$suffix.ubi.sparse")
+fi
 missing=0
 for name in "${required[@]}"; do
   if [[ ! -f "$images_dir/$name" ]]; then
@@ -82,5 +86,5 @@ printf 'This erases the CHIP NAND.\n'
 # CHECK_DEPS skips CHIP-tools' own dependency probe, which also demands
 # sunxi-nand-image-builder even though this flow never uses it.
 cd "$chip_tools_dir"
-exec env CHECK_DEPS=1 POCKETCHIP_SLC=1 \
+exec env CHECK_DEPS=1 POCKETCHIP_SLC=1 POCKETCHIP_SKIP_UBI="${POCKETCHIP_SKIP_UBI:-0}" \
   ./chip-update-firmware.sh -p -r -L "$images_dir" -F "$format"

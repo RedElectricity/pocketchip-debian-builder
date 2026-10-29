@@ -245,6 +245,24 @@ The flash flow:
 7. Flashes the sparse UBI image to the `UBI` partition. Both flash paths refuse
    unless the image directory is marked with `nand_slc_mode=1`.
 
+Step 7 is not reliable enough to be the rootfs install path. U-Boot writes and
+verifies the sparse image itself, but Linux can still find an uncorrectable
+BCH page afterwards: the observed failures were single data pages near the end
+of the UBI image (PEB 509 in one flash, PEB 466 in another). UBI then attaches
+and UBIFS mounts, but reading a directory entry fails and the graphical session
+never starts, which looks like a black screen after the splash. U-Boot cannot
+detect this, because it verifies with its own read path.
+
+Use CHIP-tools only for the boot area, and let Linux own the rootfs:
+
+```sh
+CONFIRM_NAND_WRITE=YES make nand-flash-chip-tools-assets-slc
+```
+
+`POCKETCHIP_SKIP_UBI=1` makes the patched CHIP-tools erase and write SPL,
+U-Boot, `zImage`, DTB and initrd, then leave U-Boot fastboot without touching
+the UBI partition.
+
 If a freshly rewritten UBIFS rootfs repeatedly reports an uncorrectable UBI
 read from the same PEB, mark that single eraseblock bad before reflashing. For
 example, UBI `PEB 423` maps to absolute NAND offset `0x6ec00000` with this
@@ -268,39 +286,35 @@ not enough; scrub is more aggressive around bad-block metadata.
 
 ## Linux-Side UBI Rescue Install
 
-If U-Boot fastboot writes a rootfs that Linux later mounts read-only with UBI
-ECC errors, use the rescue installer. It FEL-boots the Debian kernel with a
-small initramfs, formats the `UBI` MTD partition with Linux `ubiformat`, creates
-the `rootfs` UBI volume, and writes the UBIFS payload with Linux
-`ubiupdatevol`. This avoids using U-Boot's NAND writer for the persistent
-rootfs.
+This is the recommended way to install the persistent rootfs. It FEL-boots the
+Debian kernel with a small initramfs, formats the `UBI` MTD partition with
+Linux `ubiformat`, creates the `rootfs` UBI volume, and writes the UBIFS
+payload with Linux `ubiupdatevol`. Linux handles bad blocks and ECC during the
+write, so the volume is readable by the same stack that mounts it at boot.
 
-Build the rescue initramfs after `nand-image-mlc-pc-slc`:
+The `nand-pocketchip` CI artifact now contains the rescue initrd
+(`nand-rescue-initrd-400000-4000-500.uimage`) next to the boot assets. Point the
+host targets at the downloaded artifact if you did not build locally:
 
 ```sh
-make nand-rescue-initramfs-slc
+NAND_DIR=build/artifacts/40806243433/nand-pocketchip \
+  CONFIRM_NAND_WRITE=YES make nand-rescue-install-usb-slc
 ```
 
-Then boot the PocketCHIP into FEL and run:
+The rescue initrd expects a UBIFS payload rather than the UBI image. Extract it
+from the sparse UBI artifact; the helper expands the sparse file and follows
+the UBI VID headers, so no Linux host is needed:
 
 ```sh
-CONFIRM_NAND_WRITE=YES make nand-rescue-install-slc
+make nand-ubi-payload-slc NAND_DIR=build/artifacts/40806243433/nand-pocketchip
 ```
 
-Default host/device rescue addresses are `172.16.42.1` and `172.16.42.2`,
-with the device listening on TCP port `4242`. Override with
-`NAND_RESCUE_NET_IFACE`, `NAND_RESCUE_HOST_IP`, `NAND_RESCUE_DEVICE_IP`, or
-`NAND_RESCUE_PORT` if needed.
-
-On this PocketCHIP, Debian's MUSB gadget path exposes
-`/sys/class/udc/musb-hdrc.1.auto`, but `g_ether` fails to start the controller.
-Use the USB-stick payload fallback instead:
+Put the result on a FAT32 or ext4 stick:
 
 ```sh
-make nand-rescue-initramfs-usb-slc
-sudo mount /dev/sdX1 /mnt/pocketchip-rescue-usb
-sudo ./scripts/prepare-nand-rescue-usb.sh /mnt/pocketchip-rescue-usb
-sudo umount /mnt/pocketchip-rescue-usb
+make nand-rescue-usb-payload-slc \
+  NAND_DIR=build/artifacts/40806243433/nand-pocketchip \
+  USB_MOUNT=/Volumes/POCKETCHIP
 ```
 
 The helper writes `pocketchip/rootfs.ubifs` plus a `.sha256` file to the mounted
@@ -308,12 +322,19 @@ stick. Plug that stick into the PocketCHIP USB host port, boot the board into
 FEL, then run:
 
 ```sh
-CONFIRM_NAND_WRITE=YES make nand-rescue-install-usb-slc
+NAND_DIR=build/artifacts/40806243433/nand-pocketchip \
+  CONFIRM_NAND_WRITE=YES make nand-rescue-install-usb-slc
 ```
 
 The rescue initramfs waits for the USB storage device, mounts it read-only,
 verifies the payload size and SHA256 against the build artifact, writes
 `/dev/ubi0_0`, syncs, and reboots.
+
+A network-source rescue still exists (`NAND_RESCUE_SOURCE=net` and
+`make nand-rescue-install-slc`) with host/device addresses `172.16.42.1` and
+`172.16.42.2` on TCP port `4242`. On this PocketCHIP, Debian's MUSB gadget path
+exposes `/sys/class/udc/musb-hdrc.1.auto` but `g_ether` fails to start the
+controller, so use the USB-stick payload.
 
 If the rootfs UBI partition was already written and only the boot area needs a
 refresh, use the bootloader target from FEL mode:
