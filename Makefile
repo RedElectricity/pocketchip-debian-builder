@@ -10,8 +10,8 @@ NAND_FORMAT ?= toshiba-4g-mlc
 NAND_UBI_SUFFIX ?= 400000-4000-500
 
 .PHONY: check publish-check upstreams dtbo rootfs image uboot verify-uboot fel-boot fel-verify
-.PHONY: sunxi-tools-misc chip-mtd-utils nand-preflight uboot-legacy uboot-legacy-mlc-pc uboot-legacy-mlc-pc-slc uboot-nand nand-image nand-image-mlc-pc nand-image-mlc-pc-slc nand-rescue-initramfs-slc nand-rescue-initramfs-usb-slc nand-ubi-payload-slc nand-rescue-usb-payload-slc
-.PHONY: nand-probe-legacy nand-probe-legacy-serial nand-probe-legacy-mlc-pc nand-probe-mainline nand-flash-chip-tools-slc nand-flash-chip-tools-assets-slc nand-flash-legacy nand-flash-legacy-slc nand-flash-bootloader-slc nand-rescue-install-slc nand-rescue-install-usb-slc nand-verify
+.PHONY: sunxi-tools-misc chip-mtd-utils nand-preflight uboot-legacy uboot-legacy-mlc-pc uboot-legacy-mlc-pc-slc uboot-nand nand-image nand-image-mlc-pc nand-image-mlc-pc-slc nand-rescue-initramfs-slc nand-rescue-initramfs-usb-slc nand-rescue-initramfs-wifi-slc nand-ubi-payload-slc nand-rescue-usb-payload-slc
+.PHONY: nand-probe-legacy nand-probe-legacy-serial nand-probe-legacy-mlc-pc nand-probe-mainline nand-flash-chip-tools-slc nand-flash-chip-tools-assets-slc nand-flash-legacy nand-flash-legacy-slc nand-flash-bootloader-slc nand-rescue-install-slc nand-rescue-install-usb-slc nand-rescue-install-wifi-slc nand-verify
 
 check:
 	./scripts/check-host.sh
@@ -91,6 +91,12 @@ nand-rescue-initramfs-usb-slc:
 	sudo env NAND_BUILD_DIR=$(CURDIR)/build/nand-slc \
 	  NAND_IMAGE_DIR=$(CURDIR)/build/nand-slc/images \
 	  NAND_RESCUE_SOURCE=usb \
+	  ./scripts/build-nand-rescue-initramfs.sh
+
+nand-rescue-initramfs-wifi-slc:
+	sudo env NAND_BUILD_DIR=$(CURDIR)/build/nand-slc \
+	  NAND_IMAGE_DIR=$(CURDIR)/build/nand-slc/images \
+	  NAND_RESCUE_SOURCE=wifi \
 	  ./scripts/build-nand-rescue-initramfs.sh
 
 nand-ubi-payload-slc:
@@ -206,6 +212,31 @@ nand-rescue-install-usb-slc:
 	  --format toshiba-4g-mlc \
 	  --require-slc-mode \
 	  --source usb \
+	  --source-over-serial \
+	  --i-understand-this-erases-ubi
+
+# Wi-Fi install: the rescue initramfs prompts for SSID/password on the serial
+# console and streams the UBIFS payload from this host over TCP. Credentials
+# come from the environment so they never live in the repository.
+nand-rescue-install-wifi-slc:
+	@test "$$CONFIRM_NAND_WRITE" = YES || { \
+	  printf 'Refusing Linux-side UBI rewrite. Re-run with CONFIRM_NAND_WRITE=YES.\\n' >&2; \
+	  exit 2; \
+	}
+	@test -n "$$NAND_RESCUE_WIFI_SSID" || { \
+	  printf 'Set NAND_RESCUE_WIFI_SSID (and NAND_RESCUE_WIFI_PSK).\\n' >&2; \
+	  exit 2; \
+	}
+	sudo env NAND_RESCUE_WIFI_SSID="$$NAND_RESCUE_WIFI_SSID" \
+	  NAND_RESCUE_WIFI_PSK="$$NAND_RESCUE_WIFI_PSK" \
+	  ./scripts/fel-nand.py \
+	  --nand-dir "$(NAND_DIR)" \
+	  --images-dir "$(NAND_IMAGES_DIR)" \
+	  --timeout 1800 \
+	  rescue-install \
+	  --format toshiba-4g-mlc \
+	  --require-slc-mode \
+	  --source wifi \
 	  --source-over-serial \
 	  --i-understand-this-erases-ubi
 

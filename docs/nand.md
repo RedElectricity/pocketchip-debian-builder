@@ -253,6 +253,14 @@ and UBIFS mounts, but reading a directory entry fails and the graphical session
 never starts, which looks like a black screen after the splash. U-Boot cannot
 detect this, because it verifies with its own read path.
 
+Per-block repair through U-Boot is not a durable fix either. On the tested unit
+a block written with `nand write.slc-mode` and then read back with
+`nand read.slc-mode` plus `cmp.b` still failed the kernel's ECC read path in the
+same boot session (`error -74 ... read 0 bytes`), so U-Boot's read-retry
+handling is more forgiving than `sunxi_nand` for marginal MLC pages. Rewriting
+such pages only moves the failure to a neighbouring page. Let Linux own the
+whole UBI write instead.
+
 Use CHIP-tools only for the boot area, and let Linux own the rootfs:
 
 ```sh
@@ -330,11 +338,33 @@ The rescue initramfs waits for the USB storage device, mounts it read-only,
 verifies the payload size and SHA256 against the build artifact, writes
 `/dev/ubi0_0`, syncs, and reboots.
 
-A network-source rescue still exists (`NAND_RESCUE_SOURCE=net` and
+### Wi-Fi payload
+
+When no USB storage is available, build the rescue initramfs with the Wi-Fi
+source (`rescue_source=wifi` in the CI workflow, or
+`make nand-rescue-initramfs-wifi-slc`) and stream the payload over the local
+network:
+
+```sh
+NAND_DIR=build/artifacts/40863894173/nand-pocketchip \
+  NAND_RESCUE_WIFI_SSID='my-ssid' NAND_RESCUE_WIFI_PSK='my-passphrase' \
+  CONFIRM_NAND_WRITE=YES make nand-rescue-install-wifi-slc
+```
+
+The initramfs loads `rtl8723bs`, scans 2.4 GHz networks, prints the visible
+SSIDs, prompts for SSID and password on the serial console, associates with
+`wpa_supplicant`, obtains a DHCP lease, and waits for a TCP stream on port
+`4242`. The host streams the extracted UBIFS directly into `ubiupdatevol`; the
+initramfs then hashes the written volume and compares it with the baked SHA256
+before rebooting. Credentials are passed through the environment and are never
+stored in the repository, and password echo is disabled so the passphrase does
+not land in the serial log. The PocketCHIP radio is 2.4 GHz only.
+
+A USB-gadget network rescue still exists (`NAND_RESCUE_SOURCE=net` and
 `make nand-rescue-install-slc`) with host/device addresses `172.16.42.1` and
 `172.16.42.2` on TCP port `4242`. On this PocketCHIP, Debian's MUSB gadget path
 exposes `/sys/class/udc/musb-hdrc.1.auto` but `g_ether` fails to start the
-controller, so use the USB-stick payload.
+controller, so prefer the Wi-Fi or USB-stick payload.
 
 If the rootfs UBI partition was already written and only the boot area needs a
 refresh, use the bootloader target from FEL mode:

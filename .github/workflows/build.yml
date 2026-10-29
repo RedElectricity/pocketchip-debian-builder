@@ -21,6 +21,14 @@ on:
         description: Also build the experimental NAND SLC installer (PocketCHIP)
         type: boolean
         default: false
+      rescue_source:
+        description: Payload source baked into the NAND rescue initramfs
+        type: choice
+        options:
+          - usb
+          - wifi
+          - net
+        default: usb
   push:
     tags:
       - "v*"
@@ -182,7 +190,15 @@ jobs:
       # with ubiformat and is the reliable install path.
       - name: Build NAND rescue initramfs
         if: matrix.variant == 'pocketchip' && inputs.with_nand
-        run: sudo make nand-rescue-initramfs-usb-slc
+        env:
+          RESCUE_SOURCE: ${{ inputs.rescue_source || 'usb' }}
+        run: |
+          case "$RESCUE_SOURCE" in
+            usb) target=nand-rescue-initramfs-usb-slc ;;
+            wifi) target=nand-rescue-initramfs-wifi-slc ;;
+            *) target=nand-rescue-initramfs-slc ;;
+          esac
+          sudo make "$target"
 
       - name: Upload NAND installer
         if: matrix.variant == 'pocketchip' && inputs.with_nand

@@ -640,6 +640,34 @@ def rescue_install(args: argparse.Namespace) -> int:
                 print(f"[rescue] host USB network interface: {iface}")
                 configure_rescue_iface(args, iface)
                 send_file_to_rescue(args, ubifs)
+            elif args.source == "wifi":
+                if not serial.wait_for(r"Wi-Fi SSID:", args.timeout):
+                    raise RuntimeError("rescue initramfs did not reach the Wi-Fi prompt")
+                ssid = os.environ.get("NAND_RESCUE_WIFI_SSID", "")
+                psk = os.environ.get("NAND_RESCUE_WIFI_PSK", "")
+                if not ssid:
+                    raise RuntimeError(
+                        "set NAND_RESCUE_WIFI_SSID (and NAND_RESCUE_WIFI_PSK) "
+                        "to join Wi-Fi from the rescue initramfs"
+                    )
+                print(f"[rescue] joining Wi-Fi SSID {ssid!r}")
+                serial.write(ssid + "\r")
+                if not serial.wait_for(r"Wi-Fi password", args.timeout):
+                    raise RuntimeError("rescue initramfs did not ask for the Wi-Fi password")
+                serial.write(psk + "\r")
+                if not serial.wait_for(r"\[rescue\] device IP: ", args.timeout):
+                    raise RuntimeError("rescue initramfs did not report a Wi-Fi address")
+                match = re.search(
+                    r"\[rescue\] device IP: ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)",
+                    serial.buffer,
+                )
+                if not match:
+                    raise RuntimeError(
+                        "rescue initramfs did not obtain a DHCP lease over Wi-Fi"
+                    )
+                args.device_ip = match.group(1)
+                print(f"[rescue] device IP {args.device_ip}")
+                send_file_to_rescue(args, ubifs)
             else:
                 if not serial.wait_for(r"\[rescue\].*writing USB payload", args.timeout):
                     raise RuntimeError("rescue initramfs did not start the USB payload write step")
@@ -1005,7 +1033,11 @@ def main() -> int:
     )
     rescue.add_argument("--format", default="auto", help="auto, ubi_type, or one of: " + ", ".join(GEOMETRIES))
     rescue.add_argument("--ubifs", type=Path, default=None, help="UBIFS payload to stream; defaults to build work dir")
-    rescue.add_argument("--source", choices=["net", "usb"], default=os.environ.get("NAND_RESCUE_SOURCE", "net"))
+    rescue.add_argument(
+        "--source",
+        choices=["net", "usb", "wifi"],
+        default=os.environ.get("NAND_RESCUE_SOURCE", "net"),
+    )
     rescue.add_argument("--i-understand-this-erases-ubi", action="store_true")
     rescue.add_argument("--require-slc-mode", action="store_true")
     rescue.add_argument(

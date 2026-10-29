@@ -90,6 +90,7 @@ HOST_IP=$host_ip
 PORT=$port
 SOURCE=$source_mode
 USB_PAYLOAD_PATH=$usb_payload_path
+WIFI_COUNTRY=${NAND_RESCUE_WIFI_COUNTRY:-00}
 EOF
 
 modules_file="$rootfs/etc/initramfs-tools/modules"
@@ -106,7 +107,7 @@ cleanup_rescue_initramfs_tools() {
 }
 trap cleanup_rescue_initramfs_tools EXIT
 
-for module in ofpart sunxi_nand ubi phy_sun4i_usb phy_generic musb_hdrc sunxi ehci-platform ohci-platform usb-storage uas scsi_common scsi_mod sd_mod ext4 vfat fat nls_ascii nls_cp437; do
+for module in ofpart sunxi_nand ubi phy_sun4i_usb phy_generic musb_hdrc sunxi ehci-platform ohci-platform usb-storage uas scsi_common scsi_mod sd_mod ext4 vfat fat nls_ascii nls_cp437 mmc_core sunxi_mmc cfg80211 mac80211 rtl8723bs; do
   if ! grep -Eq "^[[:space:]]*$module([[:space:]]|\$)" "$modules_file"; then
     printf '%s\n' "$module" >> "$modules_file"
   fi
@@ -132,8 +133,15 @@ copy_exec /usr/sbin/ubidetach /usr/sbin/ubidetach
 copy_exec /usr/sbin/ubimkvol /usr/sbin/ubimkvol
 copy_exec /usr/sbin/ubiupdatevol /usr/sbin/ubiupdatevol
 copy_exec /usr/sbin/ubinfo /usr/sbin/ubinfo
+copy_exec /usr/sbin/iw /usr/sbin/iw
+copy_exec /usr/sbin/wpa_supplicant /usr/sbin/wpa_supplicant
+for fw in /lib/firmware/rtlwifi/rtl8723bs_nic.bin \
+          /lib/firmware/rtlwifi/rtl8723bs_config.bin; do
+  [ -f "$fw" ] && copy_file firmware "$fw" "$fw"
+done
 copy_file config /etc/pocketchip/nand-rescue.env /etc/pocketchip/nand-rescue.env
 manual_add_modules g_ether usb_f_rndis u_ether libcomposite
+manual_add_modules mmc_core sunxi_mmc cfg80211 mac80211 rtl8723bs
 EOF
 chmod 0755 "$rootfs/etc/initramfs-tools/hooks/pocketchip-nand-rescue"
 
@@ -207,6 +215,14 @@ verify_payload() {
     die_rescue "payload sha256 mismatch: got $sha expected $ROOTFS_UBIFS_SHA256"
 }
 
+verify_volume() {
+  log_rescue "verifying written UBI volume"
+  sha="$(busybox cat /dev/ubi0_0 | busybox sha256sum | busybox awk '{print $1}')"
+  log_rescue "volume sha256: $sha"
+  [ "$sha" = "$ROOTFS_UBIFS_SHA256" ] ||
+    die_rescue "written volume sha256 mismatch: got $sha expected $ROOTFS_UBIFS_SHA256"
+}
+
 install_from_usb() {
   log_rescue "waiting for USB storage payload: $USB_PAYLOAD_PATH"
   for module in phy_sun4i_usb ehci-platform ohci-platform usb-storage uas scsi_common scsi_mod sd_mod ext4 vfat fat nls_ascii nls_cp437; do
@@ -245,6 +261,7 @@ install_from_usb() {
   ubiupdatevol /dev/ubi0_0 "$payload" ||
     die_rescue "USB ubiupdatevol failed"
   umount "$mount_dir" 2>/dev/null || true
+  verify_volume
 }
 
 install_from_net() {
@@ -281,11 +298,90 @@ install_from_net() {
   log_rescue "waiting for host stream on $DEVICE_IP:$PORT via $iface"
   busybox nc -l -p "$PORT" | ubiupdatevol /dev/ubi0_0 -s "$ROOTFS_UBIFS_SIZE" - ||
     die_rescue "network ubiupdatevol failed"
+  verify_volume
+}
+
+install_from_wifi() {
+  log_rescue "starting RTL8723BS Wi-Fi"
+  for rf in /sys/class/rfkill/rfkill*; do
+    [ -e "$rf/soft" ] && echo 0 > "$rf/soft" 2>/dev/null || true
+  done
+  for module in mmc_core sunxi_mmc cfg80211 mac80211 rtl8723bs; do
+    modprobe "$module" 2>/dev/null || log_rescue "module $module not loaded explicitly"
+  done
+  for _ in $(seq 1 80); do
+    [ -e /sys/class/net/wlan0 ] && break
+    sleep 0.25
+  done
+  [ -e /sys/class/net/wlan0 ] || die_rescue "wlan0 did not appear"
+  ip link set wlan0 up || die_rescue "could not bring wlan0 up"
+  iw reg set "${WIFI_COUNTRY:-00}" 2>/dev/null || true
+
+  log_rescue "scanning for nearby networks"
+  iw dev wlan0 scan 2>/dev/null |
+    busybox awk '/^[ \t]*SSID:/ { sub(/^[ \t]*SSID:[ \t]*/, ""); if ($0 != "") print "[rescue] SSID: " $0 }' |
+    busybox sort -u > /dev/console 2>/dev/null || true
+
+  printf 'Wi-Fi SSID: ' >/dev/console
+  IFS= read -r ssid </dev/console
+  printf '\nWi-Fi password (empty for open network): ' >/dev/console
+  stty -echo </dev/console 2>/dev/null || true
+  IFS= read -r psk </dev/console
+  stty echo </dev/console 2>/dev/null || true
+  printf '\n' >/dev/console
+  [ -n "$ssid" ] || die_rescue "empty SSID"
+
+  umask 077
+  if [ -n "$psk" ]; then
+    cat > /tmp/wpa.conf <<WPACONF
+ctrl_interface=/run/wpa_supplicant
+network={
+  ssid="$ssid"
+  psk="$psk"
+}
+WPACONF
+  else
+    cat > /tmp/wpa.conf <<WPACONF
+ctrl_interface=/run/wpa_supplicant
+network={
+  ssid="$ssid"
+  key_mgmt=NONE
+}
+WPACONF
+  fi
+
+  mkdir -p /run/wpa_supplicant
+  wpa_supplicant -B -Dnl80211 -i wlan0 -c /tmp/wpa.conf -f /tmp/wpa.log ||
+    die_rescue "wpa_supplicant failed to start"
+  connected=""
+  for _ in $(seq 1 60); do
+    if iw dev wlan0 link 2>/dev/null | busybox grep -q "^Connected"; then
+      connected=1
+      break
+    fi
+    sleep 0.5
+  done
+  if [ -z "$connected" ]; then
+    busybox cat /tmp/wpa.log >/dev/console 2>/dev/null || true
+    die_rescue "Wi-Fi association failed"
+  fi
+
+  log_rescue "associated; requesting DHCP"
+  busybox udhcpc -i wlan0 -n -q -t 20 -T 3 >/dev/console 2>&1 ||
+    log_rescue "udhcpc did not get a lease; continuing"
+  ipv4="$(ip -4 addr show dev wlan0 2>/dev/null |
+    busybox awk '/inet / { sub(/\/.*/, "", $2); print $2; exit }')"
+  log_rescue "device IP: ${ipv4:-none}"
+  log_rescue "waiting for host stream on port $PORT"
+  busybox nc -l -p "$PORT" | ubiupdatevol /dev/ubi0_0 -s "$ROOTFS_UBIFS_SIZE" - ||
+    die_rescue "Wi-Fi ubiupdatevol failed"
+  verify_volume
 }
 
 case "$SOURCE" in
   usb) install_from_usb ;;
   net) install_from_net ;;
+  wifi) install_from_wifi ;;
   *) die_rescue "unsupported SOURCE=$SOURCE" ;;
 esac
 
