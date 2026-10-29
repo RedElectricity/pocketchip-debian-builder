@@ -206,42 +206,34 @@ and has been tested through a full boot cycle.
 After the probe and image build both match the detected `ubi_type`:
 
 ```sh
-CONFIRM_NAND_WRITE=YES make nand-flash-legacy-slc
+CONFIRM_NAND_WRITE=YES make nand-flash-chip-tools-slc
 ```
 
-Equivalent direct command:
+That stages the official CHIP-tools at a pinned commit with
+`tools/chip-tools-pocketchip.patch` applied, then runs
+`chip-update-firmware.sh -p -r -L build/nand-slc/images -F Toshiba_4G_MLC`.
+The patch replaces CHIP-tools' `flash_images` for SLC-mode images: the stock
+version asks U-Boot to mount `ubi0:rootfs`, but U-Boot cannot attach a
+slc-mode UBI volume, so the patched function writes the kernel, DTB and initrd
+to their raw NAND slots with `.slc-mode` helpers and leaves the UBI partition
+to fastboot. It also drops the `-i 0x1f3a`/`-u` fastboot options that current
+host tools reject, and accepts absolute `-L` paths.
 
-```sh
-sudo ./scripts/fel-nand.py \
-  --nand-dir build/nand-slc \
-  --images-dir build/nand-slc/images \
-  --timeout 240 \
-  flash-legacy \
-  --format toshiba-4g-mlc \
-  --require-slc-mode \
-  --source-over-serial \
-  --i-understand-this-erases-nand
-```
+The first flash of a board whose saved environment was written by an older
+`fel-nand.py` still needs one serial-triggered run, because that environment
+does not contain the `fel_booted`/`scriptaddr` guard that lets a FEL-loaded
+U-Boot script run by itself. Use `make nand-flash-legacy-slc` once for that
+migration; it now saves an environment with the guard, so later CHIP-tools
+flashes need no UART input.
 
 The older plain-MLC proof image can still be flashed with `make
 nand-flash-legacy`, but it is expected to hit the Debian `MLC NAND is not
 supported` UBI guard unless a custom kernel/module override is added.
 
-To force a specific detected geometry on the non-SLC flow:
-
-```sh
-sudo ./scripts/fel-nand.py flash-legacy \
-  --format hynix-8g-mlc \
-  --i-understand-this-erases-nand
-```
-
 The flash flow:
 
-1. FEL-loads SPL, U-Boot, and a generated U-Boot script.
-   `--source-over-serial` interrupts U-Boot over UART and runs the loaded
-   script explicitly, which avoids stale NAND environment skipping the FEL
-   boot target.
-2. Erases NAND with `nand erase.chip` by default.
+1. FEL-loads SPL, U-Boot, and a generated U-Boot script into DRAM.
+2. Erases NAND with `nand erase.chip`.
 3. Writes primary SPL, backup SPL, and U-Boot.
 4. Writes raw NAND boot assets with `.slc-mode`:
    `zImage` at `0x01000000`, DTB at `0x02000000`, and `initrd.uimage` at
@@ -250,9 +242,8 @@ The flash flow:
    index. U-Boot loads the boot assets with `nand read.slc-mode`; Linux mounts
    UBIFS after the kernel starts.
 6. Enters U-Boot fastboot.
-7. Flashes the sparse UBI image to the `UBI` partition. On the SLC target,
-   `fel-nand.py` refuses to proceed unless the image directory is marked with
-   `nand_slc_mode=1`.
+7. Flashes the sparse UBI image to the `UBI` partition. Both flash paths refuse
+   unless the image directory is marked with `nand_slc_mode=1`.
 
 If a freshly rewritten UBIFS rootfs repeatedly reports an uncorrectable UBI
 read from the same PEB, mark that single eraseblock bad before reflashing. For

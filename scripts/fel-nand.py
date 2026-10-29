@@ -403,7 +403,11 @@ def nand_boot_env_lines(kernel_size: int, dtb_size: int, initrd_size: int, slc_b
         "setenv clear_fastboot 'i2c mw 0x34 0x4 0x00 4;'",
         "setenv write_fastboot 'i2c mw 0x34 0x4 66 1; i2c mw 0x34 0x5 62 1; i2c mw 0x34 0x6 30 1; i2c mw 0x34 0x7 00 1'",
         "setenv test_fastboot 'i2c read 0x34 0x4 4 0x80200000; if itest.s *0x80200000 -eq fb0; then echo (Fastboot); i2c mw 0x34 0x4 0x00 4; fastboot 0; fi'",
-        "setenv bootcmd 'run test_fastboot; for path in ${bootpaths}; do run boot_${path}; done'",
+        # The fel_booted/scriptaddr guard lets a later FEL run source the
+        # script it loaded without serial input, which is what CHIP-tools
+        # relies on. It is inert for normal NAND boots.
+        "setenv bootcmd 'run test_fastboot; if test -n ${fel_booted} && test -n ${scriptaddr}; then echo (FEL boot); source ${scriptaddr}; fi; for path in ${bootpaths}; do run boot_${path}; done'",
+        "setenv fel_booted 0",
         "setenv video-mode",
         "setenv stdout serial,vidconsole",
         "setenv stderr serial,vidconsole",

@@ -59,6 +59,20 @@ CONFIRM_NAND_WRITE=YES make nand-flash-bootloader-slc
 CONFIRM_NAND_WRITE=YES make nand-rescue-install-usb-slc
 ```
 
+For a direct flash of the built SLC image, the flow uses the official
+CHIP-tools with the PocketCHIP patch from this repo:
+
+```sh
+CONFIRM_NAND_WRITE=YES make nand-flash-chip-tools-slc
+```
+
+That stages CHIP-tools at a pinned commit, applies
+`tools/chip-tools-pocketchip.patch`, and runs `chip-update-firmware.sh` against
+`build/nand-slc/images`. `scripts/fel-nand.py` remains for probing,
+bootloader-only writes and the rescue installer. The first flash of a board
+whose saved U-Boot environment predates the `fel_booted`/`scriptaddr` guard
+still needs one `make nand-flash-legacy-slc` run over the UART.
+
 The flash/install commands erase internal NAND and intentionally require an
 explicit confirmation variable plus script-level destructive-write guards.
 

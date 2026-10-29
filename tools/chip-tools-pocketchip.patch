@@ -1,0 +1,200 @@
+diff --git a/chip-update-firmware.sh b/chip-update-firmware.sh
+index 488e602..53a71d0 100755
+--- a/chip-update-firmware.sh
++++ b/chip-update-firmware.sh
+@@ -10,7 +10,7 @@ DL_URL="http://chip.jfpossibilities.com/chip/images"
+ 
+ WGET="wget"
+ 
+-FEL='sudo sunxi-fel' FASTBOOT='sudo fastboot' SNIB=false
++FEL=${FEL:-sudo sunxi-fel} FASTBOOT=${FASTBOOT:-sudo fastboot} SNIB=${SNIB:-false}
+ 
+ FLAVOR=server
+ BRANCH=stable
+@@ -135,7 +135,10 @@ function dl_probe {
+   if [ -z $LOCALDIR ];then
+     ln -s ../../$DL_DIR/${BRANCH}-${FLAVOR}-b${CACHENUM}/ $IMAGESDIR
+   else
+-    ln -s ../../$LOCALDIR $IMAGESDIR
++    # Resolve the local directory before linking so -L accepts both relative
++    # and absolute paths from any working directory.
++    LOCALDIR=$(cd "$LOCALDIR" && pwd) || exit 1
++    ln -s "$LOCALDIR" $IMAGESDIR
+   fi
+ 
+   if [[ -f ${IMAGESDIR}/ubi_type ]]; then rm ${IMAGESDIR}/ubi_type; fi
+diff --git a/common.sh b/common.sh
+index c705c76..548f448 100755
+--- a/common.sh
++++ b/common.sh
+@@ -47,7 +47,7 @@ filesize() {
+ 
+ #------------------------------------------------------------
+ wait_for_fastboot() {
+-  if [[ -v DONT_WAIT_FOR_STATE ]]; then return 0; fi
++  if [ -n "${DONT_WAIT_FOR_STATE+x}" ]; then return 0; fi
+ 
+   echo -n "waiting for fastboot...";
+   export FLASH_WAITING_FOR_DEVICE=1
+@@ -68,7 +68,7 @@ wait_for_fastboot() {
+ 
+ #------------------------------------------------------------
+ wait_for_fel() {
+-  if [[ -v DONT_WAIT_FOR_STATE ]]; then return 0; fi
++  if [ -n "${DONT_WAIT_FOR_STATE+x}" ]; then return 0; fi
+ 
+   echo -n "waiting for fel...";
+   export FLASH_WAITING_FOR_DEVICE=1
+@@ -134,6 +134,11 @@ reset" > $ubootcmds
+ flash_images() {
+   local RC=0
+ 
++  if [ -n "${POCKETCHIP_SLC:-}" ]; then
++    pocketchip_flash_images
++    return $?
++  fi
++
+   local tmpdir=`mktemp -d -t chip-uboot-script-XXXXXX`
+   local ubootcmds=$tmpdir/uboot.cmds
+   local ubootscr=$IMAGESDIR/uboot.scr
+@@ -276,3 +281,140 @@ ready_to_roll() {
+ 
+   return 0
+ }
++
++#------------------------------------------------------------
++# PocketCHIP Debian SLC-mode NAND flash.
++#
++# The Debian image keeps its kernel, DTB and initrd in raw NAND slots and puts
++# a slc-mode UBI partition after them. U-Boot cannot attach that UBI volume, so
++# the stock flash_images() (which mounts ubi0:rootfs from U-Boot) cannot boot
++# it. This variant writes the boot assets with the .slc-mode helpers and lets
++# fastboot write the UBI partition, matching scripts/build-nand-image.sh.
++# Enable it with POCKETCHIP_SLC=1 and -L pointing at a portable images dir.
++pocketchip_flash_images() {
++  local RC=0
++  local tmpdir ubootcmds ubootscr
++  tmpdir=$(mktemp -d -t chip-pocketchip-flash-XXXXXX) || return 1
++  ubootcmds=$tmpdir/uboot.cmds
++  ubootscr=$IMAGESDIR/uboot.scr
++
++  # The geometry variables hold hex digits without the 0x prefix, matching the
++  # filenames that build-nand-image.sh produces (400000-4000-500).
++  local erase_hex=$nand_erasesize
++  local write_hex=$nand_writesize
++  local oob_hex=$nand_oobsize
++  local suffix="$erase_hex-$write_hex-$oob_hex"
++
++  local spl=$IMAGESDIR/sunxi-spl.bin
++  local runtime_uboot=$IMAGESDIR/u-boot-dtb.bin
++  local nand_spl=$IMAGESDIR/spl-$suffix.bin
++  local nand_uboot=$IMAGESDIR/uboot-$erase_hex.bin
++  local boot_kernel=$IMAGESDIR/boot-zImage-$suffix.bin
++  local boot_dtb=$IMAGESDIR/boot-sun5i-r8-chip-$suffix.dtb
++  local boot_initrd=$IMAGESDIR/boot-initrd-$suffix.uimage
++  local sparseubi=$IMAGESDIR/chip-$suffix.ubi.sparse
++
++  local file
++  for file in "$spl" "$runtime_uboot" "$nand_spl" "$nand_uboot" \
++              "$boot_kernel" "$boot_dtb" "$boot_initrd" "$sparseubi"; do
++    if [ ! -f "$file" ]; then
++      echo "missing $file" >&2
++      RC=1
++    fi
++  done
++  if [ "$RC" -ne 0 ]; then
++    rm -rf "$tmpdir"
++    return 1
++  fi
++
++  local pagespereb ubootsize kernelsize dtbsize initrdsize
++  pagespereb=$(printf '%x' $((0x$nand_erasesize / 0x$nand_writesize)))
++  ubootsize=$(filesize "$nand_uboot" | xargs printf "0x%08x")
++  kernelsize=$(filesize "$boot_kernel" | xargs printf "0x%08x")
++  dtbsize=$(filesize "$boot_dtb" | xargs printf "0x%08x")
++  initrdsize=$(filesize "$boot_initrd" | xargs printf "0x%08x")
++
++  cat > "$ubootcmds" <<EOF
++echo PocketCHIP NAND flash: destructive erase starting
++nand erase.chip
++nand write.raw.noverify 0x48000000 0x0 $pagespereb
++nand write.raw.noverify 0x48000000 0x400000 $pagespereb
++nand write.slc-mode 0x49000000 0x800000 $ubootsize
++nand write.slc-mode 0x42000000 0x01000000 $kernelsize
++nand write.slc-mode 0x42f00000 0x02000000 $dtbsize
++nand write.slc-mode 0x44000000 0x02400000 $initrdsize
++setenv mtdids nand0=sunxi-nand.0
++setenv mtdparts 'mtdparts=sunxi-nand.0:4m(spl),4m(spl-backup),4m(uboot),4m(env),64m(boot),-(UBI)'
++setenv bootargs 'console=tty0 console=ttyS0,115200 root=ubi0:rootfs rootfstype=ubifs rw rootwait ubi.mtd=UBI loglevel=4'
++setenv kernel_addr_r 0x42000000
++setenv fdt_addr_r 0x43000000
++setenv ramdisk_addr_r 0x44000000
++setenv bootpaths 'initrd noinitrd'
++setenv boot_initrd 'mtdparts; nand read.slc-mode \${fdt_addr_r} 0x02000000 $dtbsize; nand read.slc-mode \${ramdisk_addr_r} 0x02400000 $initrdsize; nand read.slc-mode \${kernel_addr_r} 0x01000000 $kernelsize; bootz \${kernel_addr_r} \${ramdisk_addr_r} \${fdt_addr_r}'
++setenv boot_noinitrd 'mtdparts; nand read.slc-mode \${fdt_addr_r} 0x02000000 $dtbsize; nand read.slc-mode \${kernel_addr_r} 0x01000000 $kernelsize; bootz \${kernel_addr_r} - \${fdt_addr_r}'
++setenv clear_fastboot 'i2c mw 0x34 0x4 0x00 4;'
++setenv write_fastboot 'i2c mw 0x34 0x4 66 1; i2c mw 0x34 0x5 62 1; i2c mw 0x34 0x6 30 1; i2c mw 0x34 0x7 00 1'
++setenv test_fastboot 'i2c read 0x34 0x4 4 0x80200000; if itest.s *0x80200000 -eq fb0; then echo (Fastboot); i2c mw 0x34 0x4 0x00 4; fastboot 0; fi'
++setenv bootcmd 'run test_fastboot; if test -n \${fel_booted} && test -n \${scriptaddr}; then echo (FEL boot); source \${scriptaddr}; fi; for path in \${bootpaths}; do run boot_\${path}; done'
++setenv video-mode
++setenv stdout serial,vidconsole
++setenv stderr serial,vidconsole
++setenv bootdelay 1
++setenv fel_booted 0
++saveenv
++mtdparts
++echo going to fastboot mode for UBI flash
++fastboot 0
++${RESET_COMMAND:-while true; do sleep 10; done}
++EOF
++
++  if ! ${MKIMAGE} -A arm -T script -C none -n "flash pocketchip slc" -d "$ubootcmds" "$ubootscr"; then
++    rm -rf "$tmpdir"
++    return 1
++  fi
++
++  export FLASH_VID_PID=1f3aefe8
++  if ! wait_for_fel; then
++    echo "ERROR: please make sure CHIP is connected and jumpered in FEL mode" >&2
++    rm -rf "$tmpdir"
++    return 1
++  fi
++
++  $FEL spl "$spl" || RC=1
++  sleep 1
++
++  $FEL write 0x48000000 "$nand_spl" || RC=1
++  $FEL write 0x49000000 "$nand_uboot" || RC=1
++  $FEL write 0x42000000 "$boot_kernel" || RC=1
++  $FEL write 0x42f00000 "$boot_dtb" || RC=1
++  $FEL write 0x44000000 "$boot_initrd" || RC=1
++  $FEL write 0x4a000000 "$runtime_uboot" || RC=1
++  $FEL write 0x43100000 "$ubootscr" || RC=1
++  $FEL exe 0x4a000000 || RC=1
++
++  export FLASH_VID_PID=1f3a1010
++  if pocketchip_wait_for_fastboot; then
++    ${FASTBOOT} flash UBI "$sparseubi" || RC=1
++    ${FASTBOOT} continue > /dev/null || true
++  else
++    echo "failed to flash the UBI image" >&2
++    RC=1
++  fi
++
++  rm -rf "$tmpdir"
++
++  return $RC
++}
++
++# Newer fastboot releases dropped the -i vendor filter, so wait without it.
++pocketchip_wait_for_fastboot() {
++  local i
++  for ((i = ${TIMEOUT}; i > 0; i--)); do
++    if [ -n "$(${FASTBOOT} devices 2>/dev/null)" ]; then
++      return 0
++    fi
++    sleep 1
++  done
++
++  return 1
++}

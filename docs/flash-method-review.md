@@ -20,8 +20,12 @@ Issues to keep in mind:
 Recommended use:
 
 - Keep it as `legacy recovery`.
-- Use `docs/nand.md` and `scripts/fel-nand.py` for controlled Debian NAND
-  experiments.
+- Use `docs/nand.md` and the CHIP-tools flow for controlled Debian NAND
+  experiments: `scripts/fetch-chip-tools.sh` stages the pinned upstream tree,
+  `tools/chip-tools-pocketchip.patch` adds the SLC-mode write path, and
+  `scripts/flash-nand.sh` drives `chip-update-firmware.sh`.
+- Keep `scripts/fel-nand.py` for NAND probing, bootloader-only writes and the
+  rescue installer, which CHIP-tools does not cover.
 - Use `../upstreams/CHIP-tools` as the reference implementation and recovery
   baseline.
 - Keep mainline Debian development in this repo's scripts and docs.

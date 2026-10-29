@@ -2,7 +2,7 @@ SHELL := /usr/bin/env bash
 
 .PHONY: check publish-check upstreams dtbo rootfs image uboot verify-uboot fel-boot fel-verify
 .PHONY: sunxi-tools-misc chip-mtd-utils nand-preflight uboot-legacy uboot-legacy-mlc-pc uboot-legacy-mlc-pc-slc uboot-nand nand-image nand-image-mlc-pc nand-image-mlc-pc-slc nand-rescue-initramfs-slc nand-rescue-initramfs-usb-slc nand-rescue-usb-payload-slc
-.PHONY: nand-probe-legacy nand-probe-legacy-serial nand-probe-legacy-mlc-pc nand-probe-mainline nand-flash-legacy nand-flash-legacy-slc nand-flash-bootloader-slc nand-rescue-install-slc nand-rescue-install-usb-slc nand-verify
+.PHONY: nand-probe-legacy nand-probe-legacy-serial nand-probe-legacy-mlc-pc nand-probe-mainline nand-flash-chip-tools-slc nand-flash-legacy nand-flash-legacy-slc nand-flash-bootloader-slc nand-rescue-install-slc nand-rescue-install-usb-slc nand-verify
 
 check:
 	./scripts/check-host.sh
@@ -109,6 +109,14 @@ nand-flash-legacy:
 	  exit 2; \
 	}
 	sudo ./scripts/fel-nand.py flash-legacy --i-understand-this-erases-nand
+
+nand-flash-chip-tools-slc:
+	@test "$$CONFIRM_NAND_WRITE" = YES || { \
+	  printf 'Refusing NAND write. Re-run with CONFIRM_NAND_WRITE=YES.\\n' >&2; \
+	  exit 2; \
+	}
+	./scripts/fetch-chip-tools.sh
+	./scripts/flash-nand.sh build/nand-slc/images
 
 nand-flash-legacy-slc:
 	@test "$$CONFIRM_NAND_WRITE" = YES || { \
