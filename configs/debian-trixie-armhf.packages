@@ -95,7 +95,6 @@ zstd
 alsa-utils
 brightnessctl
 dmenu
-feh
 firefox-esr
 fonts-dejavu-core
 fonts-font-awesome
@@ -114,3 +113,4 @@ xinput
 xss-lock
 xserver-xorg-core
 xserver-xorg-input-libinput
+xwallpaper

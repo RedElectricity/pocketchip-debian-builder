@@ -1009,6 +1009,40 @@ if [[ -n "$post_install" ]]; then
   rm -f "$rootfs/tmp/pocketchip-post-install.sh"
 fi
 
+# The variant post-installs install a compiler (and, for the desktop variant,
+# the kernel headers) for a one-off native build and purge only the meta
+# package, leaving the toolchain behind. Drop it; cpp stays because
+# x11-xserver-utils (xrdb) depends on it. This is about 90 MiB.
+chroot "$rootfs" apt-get update
+chroot "$rootfs" apt-get purge -y --auto-remove \
+  build-essential gcc gcc-14 gcc-arm-linux-gnueabihf \
+  gcc-14-arm-linux-gnueabihf binutils binutils-common \
+  binutils-arm-linux-gnueabihf libbinutils libgcc-14-dev \
+  linux-libc-dev libc6-dev make dpkg-dev \
+  linux-headers-armmp "linux-headers-$version"
+chroot "$rootfs" apt-get clean
+rm -rf "$rootfs/var/lib/apt/lists"/*
+
+# Debian's linux-image-armmp ships device trees for every ARM board (about
+# 40 MiB). The boot scripts only need the CHIP tree. Prune the top level but
+# keep whatever directory holds the CHIP DTB, in case a future package nests
+# the trees by vendor.
+for dtb_dir in "${kernel_dtb_dirs[@]}"; do
+  [[ -d "$dtb_dir" ]] || continue
+  dtb_path="$(find "$dtb_dir" -type f -name 'sun5i-r8-chip.dtb' -print -quit 2>/dev/null)"
+  [[ -n "$dtb_path" ]] || continue
+  rel="${dtb_path#"$dtb_dir"/}"
+  top="${rel%%/*}"
+  if [[ "$rel" == "$top" ]]; then
+    find "$dtb_dir" -mindepth 1 -maxdepth 1 ! -name 'sun5i-r8-chip.dtb' -exec rm -rf {} +
+  else
+    find "$dtb_dir" -mindepth 1 -maxdepth 1 ! -name "$top" -exec rm -rf {} +
+  fi
+done
+
+# firmware-realtek carries Wi-Fi 6 (rtw89) firmware that the CHIP cannot use.
+rm -rf "$rootfs/usr/lib/firmware/rtw89"
+
 # openssh-server generates host keys from the package postinst, which runs in
 # this chroot, so every device flashed from the image would otherwise share the
 # same identity. Ship no keys and generate them on first boot instead.
