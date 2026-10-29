@@ -48,3 +48,17 @@ tcpflow
 testssl.sh
 upx-ucl
 yara
+
+# OSINT and data collection. theHarvester itself is not packaged for Debian and
+# its current upstream needs Python 3.14 plus Playwright, so recon-ng and the
+# DNS/whois tooling cover the same collection stage. Shodan and Censys need the
+# user's own API keys.
+ddgr
+dnsenum
+dnsrecon
+fierce
+python3-censys
+python3-shodan
+recon-ng
+wafw00f
+whois
