@@ -1011,15 +1011,27 @@ fi
 
 # The variant post-installs install a compiler (and, for the desktop variant,
 # the kernel headers) for a one-off native build and purge only the meta
-# package, leaving the toolchain behind. Drop it; cpp stays because
-# x11-xserver-utils (xrdb) depends on it. This is about 90 MiB.
-chroot "$rootfs" apt-get update
-chroot "$rootfs" apt-get purge -y --auto-remove \
-  build-essential gcc gcc-14 gcc-arm-linux-gnueabihf \
-  gcc-14-arm-linux-gnueabihf binutils binutils-common \
-  binutils-arm-linux-gnueabihf libbinutils libgcc-14-dev \
-  linux-libc-dev libc6-dev make dpkg-dev \
-  linux-headers-armmp "linux-headers-$version"
+# package, leaving the toolchain behind. Drop whatever is still installed; cpp
+# stays because x11-xserver-utils (xrdb) depends on it. This is about 90 MiB.
+# Only installed packages are purged because apt fails on names that the suite
+# does not carry at all (for example the -14 toolchain on a newer suite).
+toolchain_packages=(
+  build-essential gcc g++ gcc-14 g++-14 libgcc-14-dev libstdc++-14-dev
+  binutils binutils-common libbinutils make dpkg-dev
+  linux-libc-dev libc6-dev linux-headers-armmp "linux-headers-$version"
+  gcc-arm-linux-gnueabihf gcc-14-arm-linux-gnueabihf
+  binutils-arm-linux-gnueabihf
+)
+toolchain_installed=()
+for package in "${toolchain_packages[@]}"; do
+  if chroot "$rootfs" dpkg-query -W -f='${Status}' "$package" 2>/dev/null |
+    grep -q 'install ok installed'; then
+    toolchain_installed+=("$package")
+  fi
+done
+if ((${#toolchain_installed[@]} > 0)); then
+  chroot "$rootfs" apt-get purge -y --auto-remove "${toolchain_installed[@]}"
+fi
 chroot "$rootfs" apt-get clean
 rm -rf "$rootfs/var/lib/apt/lists"/*
 
