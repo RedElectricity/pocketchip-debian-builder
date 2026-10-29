@@ -525,12 +525,17 @@ if [[ ! -f "$debian_keyring" ]]; then
   debian_keyring="$("$repo_root/scripts/prepare-debian-keyring.sh")"
 fi
 
+# Install-time path filters keep /usr/share/doc and most translations out of
+# the image. The file is removed after the build; see the end of this script.
+trim_cfg="$repo_root/configs/dpkg-pocketchip-trim.cfg"
+
 mmdebstrap \
   --architectures="$arch" \
   --components='main,contrib,non-free-firmware' \
   --variant=minbase \
   --keyring="$debian_keyring" \
   --include="$package_csv" \
+  --setup-hook="install -d -m 0755 \"\$1/etc/dpkg/dpkg.cfg.d\" && install -m 0644 \"$trim_cfg\" \"\$1/etc/dpkg/dpkg.cfg.d/01-pocketchip-trim\"" \
   "$suite" "$rootfs" \
   "$mirror"
 
@@ -1003,6 +1008,30 @@ if [[ -n "$post_install" ]]; then
   chroot "$rootfs" /tmp/pocketchip-post-install.sh "$pocketchip_user"
   rm -f "$rootfs/tmp/pocketchip-post-install.sh"
 fi
+
+# openssh-server generates host keys from the package postinst, which runs in
+# this chroot, so every device flashed from the image would otherwise share the
+# same identity. Ship no keys and generate them on first boot instead.
+rm -f "$rootfs"/etc/ssh/ssh_host_*
+cat > "$rootfs/etc/systemd/system/pocketchip-ssh-hostkeys.service" <<'EOF'
+[Unit]
+Description=Generate SSH host keys on first boot
+Before=ssh.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ssh-keygen -A
+
+[Install]
+WantedBy=multi-user.target
+EOF
+install -d -m 0755 "$rootfs/etc/systemd/system/multi-user.target.wants"
+ln -sfn ../pocketchip-ssh-hostkeys.service \
+  "$rootfs/etc/systemd/system/multi-user.target.wants/pocketchip-ssh-hostkeys.service"
+
+# Drop the temporary install-time path filters so package installs on the
+# running device install their documentation and translations normally.
+rm -f "$rootfs/etc/dpkg/dpkg.cfg.d/01-pocketchip-trim"
 
 trap - EXIT
 

@@ -14,6 +14,8 @@ The image is a USB root filesystem: write it to a USB drive, put the drive in th
 
 Both variants install the kernel from the base suite (trixie's 6.12 LTS). The 7.x kernel from `trixie-backports` is not usable here: its rewritten sunxi NAND driver misreads the SLC-mode UBI volume and boot hangs on a UBIFS ECC error, so the backports kernel stays opt-in. Set `KERNEL_SUITE` in the environment, or the `POCKETCHIP_KERNEL_SUITE` repository variable in Actions, to another suite such as `sid`; `none` explicitly selects the base suite's kernel. The base package set already includes `openssh-server` (enabled at boot), `openssh-client`, NetworkManager, `git`, `tmux`, `neovim`/`vim`, `curl`/`wget`, `htop`, `rsync`, `zstd`, `zip`/`unzip`, and the usual diagnostics.
 
+To keep the NAND image small, packages are installed with dpkg path filters that drop `/usr/share/doc` (copyright files are kept) and all translations except English and the two Chinese locales. The filters are removed at the end of the build, so installing packages on the running device behaves normally. The image ships without SSH host keys: `pocketchip-ssh-hostkeys.service` runs `ssh-keygen -A` on first boot so every device gets its own identity.
+
 ## Building in GitHub Actions
 
 `.github/workflows/build.yml` builds both variants in parallel on `ubuntu-24.04` runners. Run it from **Actions → build images → Run workflow**; pick `both`, `pocketchip`, or `desktop`. Pushing a `v*` tag also builds both images and attaches them to the GitHub release.
