@@ -804,6 +804,10 @@ zram-size = ram / 2
 swap-priority = 100
 EOF
 
+# The toolchain is purged below, so prefer precompiled wheels and fail instead
+# of attempting a source build on a device that cannot compile anything.
+install -m 0644 "$repo_root/configs/pip.conf" "$rootfs/etc/pip.conf"
+
 install -d -m 0755 "$rootfs/etc/systemd/system"
 install -m 0644 "$repo_root/configs/pocketchip-framebuffer-splash.service" "$rootfs/etc/systemd/system/pocketchip-framebuffer-splash.service"
 if [[ "$pocketchip_boot_splash" == 1 ]]; then
