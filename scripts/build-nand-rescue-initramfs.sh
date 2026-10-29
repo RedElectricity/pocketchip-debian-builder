@@ -107,7 +107,7 @@ cleanup_rescue_initramfs_tools() {
 }
 trap cleanup_rescue_initramfs_tools EXIT
 
-for module in ofpart sunxi_nand ubi phy_sun4i_usb phy_generic musb_hdrc sunxi ehci-platform ohci-platform usb-storage uas scsi_common scsi_mod sd_mod ext4 vfat fat nls_ascii nls_cp437 mmc_core sunxi_mmc cfg80211 mac80211 rtl8723bs; do
+for module in ofpart sunxi_nand ubi phy_sun4i_usb phy_generic musb_hdrc sunxi ehci-platform ohci-platform usb-storage uas scsi_common scsi_mod sd_mod ext4 vfat fat nls_ascii nls_cp437 mmc_core sunxi_mmc cfg80211 mac80211 r8723bs; do
   if ! grep -Eq "^[[:space:]]*$module([[:space:]]|\$)" "$modules_file"; then
     printf '%s\n' "$module" >> "$modules_file"
   fi
@@ -141,7 +141,7 @@ for fw in /lib/firmware/rtlwifi/rtl8723bs_nic.bin \
 done
 copy_file config /etc/pocketchip/nand-rescue.env /etc/pocketchip/nand-rescue.env
 manual_add_modules g_ether usb_f_rndis u_ether libcomposite
-manual_add_modules mmc_core sunxi_mmc cfg80211 mac80211 rtl8723bs
+manual_add_modules mmc_core sunxi_mmc cfg80211 mac80211 r8723bs
 EOF
 chmod 0755 "$rootfs/etc/initramfs-tools/hooks/pocketchip-nand-rescue"
 
@@ -192,18 +192,6 @@ mtd_num="$(awk -F: '$2 ~ /"UBI"/ { sub(/^mtd/, "", $1); print $1; exit }' /proc/
 [ -n "$mtd_num" ] || die_rescue "could not find MTD partition named UBI"
 mtd_dev="/dev/mtd$mtd_num"
 [ -c "$mtd_dev" ] || die_rescue "$mtd_dev is missing"
-
-log_rescue "formatting $mtd_dev with Linux mtd-utils"
-ubidetach -m "$mtd_num" 2>/dev/null || true
-ubiformat "$mtd_dev" -y || die_rescue "ubiformat failed"
-
-log_rescue "attaching UBI on mtd$mtd_num"
-ubiattach /dev/ubi_ctrl -m "$mtd_num" || die_rescue "ubiattach failed"
-
-if [ ! -e /dev/ubi0_0 ]; then
-  log_rescue "creating autoresized rootfs volume"
-  ubimkvol /dev/ubi0 -N rootfs -m || die_rescue "ubimkvol failed"
-fi
 
 verify_payload() {
   payload="$1"
@@ -301,12 +289,12 @@ install_from_net() {
   verify_volume
 }
 
-install_from_wifi() {
+wifi_connect() {
   log_rescue "starting RTL8723BS Wi-Fi"
   for rf in /sys/class/rfkill/rfkill*; do
     [ -e "$rf/soft" ] && echo 0 > "$rf/soft" 2>/dev/null || true
   done
-  for module in mmc_core sunxi_mmc cfg80211 mac80211 rtl8723bs; do
+  for module in mmc_core sunxi_mmc cfg80211 mac80211 r8723bs; do
     modprobe "$module" 2>/dev/null || log_rescue "module $module not loaded explicitly"
   done
   for _ in $(seq 1 80); do
@@ -372,16 +360,37 @@ WPACONF
   ipv4="$(ip -4 addr show dev wlan0 2>/dev/null |
     busybox awk '/inet / { sub(/\/.*/, "", $2); print $2; exit }')"
   log_rescue "device IP: ${ipv4:-none}"
+}
+
+wifi_stream() {
   log_rescue "waiting for host stream on port $PORT"
   busybox nc -l -p "$PORT" | ubiupdatevol /dev/ubi0_0 -s "$ROOTFS_UBIFS_SIZE" - ||
     die_rescue "Wi-Fi ubiupdatevol failed"
   verify_volume
 }
 
+# Join Wi-Fi before touching the UBI partition so a failed association
+# leaves the existing rootfs in place.
+if [ "$SOURCE" = wifi ]; then
+  wifi_connect
+fi
+
+log_rescue "formatting $mtd_dev with Linux mtd-utils"
+ubidetach -m "$mtd_num" 2>/dev/null || true
+ubiformat "$mtd_dev" -y || die_rescue "ubiformat failed"
+
+log_rescue "attaching UBI on mtd$mtd_num"
+ubiattach /dev/ubi_ctrl -m "$mtd_num" || die_rescue "ubiattach failed"
+
+if [ ! -e /dev/ubi0_0 ]; then
+  log_rescue "creating autoresized rootfs volume"
+  ubimkvol /dev/ubi0 -N rootfs -m || die_rescue "ubimkvol failed"
+fi
+
 case "$SOURCE" in
   usb) install_from_usb ;;
   net) install_from_net ;;
-  wifi) install_from_wifi ;;
+  wifi) wifi_stream ;;
   *) die_rescue "unsupported SOURCE=$SOURCE" ;;
 esac
 

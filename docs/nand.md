@@ -351,7 +351,7 @@ NAND_DIR=build/artifacts/40863894173/nand-pocketchip \
   CONFIRM_NAND_WRITE=YES make nand-rescue-install-wifi-slc
 ```
 
-The initramfs loads `rtl8723bs`, scans 2.4 GHz networks, prints the visible
+The initramfs loads the staging `r8723bs` driver, scans 2.4 GHz networks, prints the visible
 SSIDs, prompts for SSID and password on the serial console, associates with
 `wpa_supplicant`, obtains a DHCP lease, and waits for a TCP stream on port
 `4242`. The host streams the extracted UBIFS directly into `ubiupdatevol`; the
