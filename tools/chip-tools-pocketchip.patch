@@ -24,7 +24,7 @@ index 488e602..53a71d0 100755
  
    if [[ -f ${IMAGESDIR}/ubi_type ]]; then rm ${IMAGESDIR}/ubi_type; fi
 diff --git a/common.sh b/common.sh
-index c705c76..548f448 100755
+index c705c76..26e0dc4 100755
 --- a/common.sh
 +++ b/common.sh
 @@ -47,7 +47,7 @@ filesize() {
@@ -57,7 +57,7 @@ index c705c76..548f448 100755
    local tmpdir=`mktemp -d -t chip-uboot-script-XXXXXX`
    local ubootcmds=$tmpdir/uboot.cmds
    local ubootscr=$IMAGESDIR/uboot.scr
-@@ -276,3 +281,140 @@ ready_to_roll() {
+@@ -276,3 +281,142 @@ ready_to_roll() {
  
    return 0
  }
@@ -189,7 +189,9 @@ index c705c76..548f448 100755
 +# Newer fastboot releases dropped the -i vendor filter, so wait without it.
 +pocketchip_wait_for_fastboot() {
 +  local i
-+  for ((i = ${TIMEOUT}; i > 0; i--)); do
++  # Erasing the whole chip and writing the raw boot assets happens before
++  # U-Boot enters fastboot, and takes minutes on a 4 GiB NAND.
++  for ((i = ${POCKETCHIP_FASTBOOT_TIMEOUT:-300}; i > 0; i--)); do
 +    if [ -n "$(${FASTBOOT} devices 2>/dev/null)" ]; then
 +      return 0
 +    fi
