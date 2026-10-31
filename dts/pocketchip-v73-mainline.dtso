@@ -149,6 +149,14 @@
 			touchscreen-inverted-x;
 			touchscreen-inverted-y;
 			allwinner,ts-attached;
+			/*
+			 * The resistive panel is noisy on lift-off: a stray
+			 * sample can throw the pointer to a corner. Type 3 is
+			 * the strongest hardware filter (16-sample average)
+			 * supported by sun4i-ts; it trades a little latency
+			 * for a stable pointer.
+			 */
+			allwinner,filter-type = <3>;
 		};
 	};
 

@@ -28,8 +28,16 @@ if command -v xsetroot >/dev/null 2>&1; then
   xsetroot -solid '#32302f' 2>/dev/null || true
 fi
 
+# Re-apply the calibration matrix at session start; the Xorg snippet covers
+# the normal path, but this also catches a device that appeared late.
+if command -v pocketchip-touch-calibrate >/dev/null 2>&1; then
+  pocketchip-touch-calibrate apply >/dev/null 2>&1 || true
+fi
+
+# Hiding the pointer quickly feels like the cursor jumps away and back on a
+# resistive panel; keep it visible for a few seconds after the last touch.
 if command -v unclutter >/dev/null 2>&1; then
-  unclutter -idle 1 -root &
+  unclutter -idle "${POCKETCHIP_UNCLUTTER_IDLE:-4}" -root &
 fi
 
 # Mousepad follows the dark desktop with a readable mono font.
