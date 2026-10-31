@@ -1,0 +1,39 @@
+#!/bin/sh
+# The tca8418_keypad probe gives up when the chip does not ACK its first I2C
+# read.  That was observed once on a cold boot: the driver returned -ENODEV
+# and the kernel never retried, leaving the PocketCHIP without a keyboard.
+# Rebind the client for a short while after boot instead of needing a reboot.
+set -u
+
+tries="${POCKETCHIP_KEYBOARD_RETRIES:-15}"
+client=""
+
+for candidate in /sys/bus/i2c/devices/*-0034; do
+  [ -e "$candidate" ] || continue
+  grep -q 'Cti,tca8418' "$candidate/modalias" 2>/dev/null || continue
+  client="$candidate"
+  break
+done
+
+[ -n "$client" ] || exit 0
+[ -e "$client/driver" ] && exit 0
+
+modprobe tca8418_keypad 2>/dev/null || true
+id="${client##*/}"
+i=0
+while [ "$i" -lt "$tries" ]; do
+  if [ -e "$client/driver" ]; then
+    echo "tca8418 keyboard bound after $i retries"
+    exit 0
+  fi
+  printf '%s\n' "$id" > /sys/bus/i2c/drivers/tca8418_keypad/bind 2>/dev/null || true
+  i=$((i + 1))
+  sleep 1
+done
+
+if [ -e "$client/driver" ]; then
+  echo "tca8418 keyboard bound after $tries retries"
+else
+  echo "tca8418 keyboard still unbound; check the I2C bus and chip power"
+fi
+exit 0

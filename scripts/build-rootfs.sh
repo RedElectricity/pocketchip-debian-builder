@@ -880,6 +880,15 @@ install -m 0644 "$repo_root/configs/pocketchip-keymap.service" "$rootfs/etc/syst
 install -d -m 0755 "$rootfs/etc/systemd/system/multi-user.target.wants"
 ln -sfn ../pocketchip-keymap.service "$rootfs/etc/systemd/system/multi-user.target.wants/pocketchip-keymap.service"
 
+# The TCA8418 driver does not retry a probe that fails with -ENODEV, which was
+# seen once on a cold boot.  A oneshot retries the i2c client bind after boot.
+install -m 0755 "$repo_root/configs/pocketchip-keyboard-rebind" \
+  "$rootfs/usr/local/sbin/pocketchip-keyboard-rebind"
+install -m 0644 "$repo_root/configs/pocketchip-keyboard-rebind.service" \
+  "$rootfs/etc/systemd/system/pocketchip-keyboard-rebind.service"
+ln -sfn ../pocketchip-keyboard-rebind.service \
+  "$rootfs/etc/systemd/system/multi-user.target.wants/pocketchip-keyboard-rebind.service"
+
 if [[ "$pocketchip_autologin_tty1" == 1 ]]; then
   install -d -m 0755 "$rootfs/etc/systemd/system/getty@tty1.service.d"
   cat > "$rootfs/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF

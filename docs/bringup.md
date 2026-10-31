@@ -330,6 +330,8 @@ modifiers. A working matrix emits key press and release events; wrong key names
 mean the keymap needs correction, while no events means the interrupt, I2C, or
 matrix wiring still needs investigation.
 
+The driver does not retry a probe that fails with `-ENODEV`, and a cold boot was observed once where the TCA8418 NAKed its first I2C read and stayed unbound for the whole session. `pocketchip-keyboard-rebind.service` now rebinds the i2c client for up to 15 seconds after boot when `/sys/bus/i2c/devices/*-0034/driver` is missing, so a transient probe failure does not require a reboot. Check the outcome with `journalctl -u pocketchip-keyboard-rebind`.
+
 The image loads two PocketCHIP usability layers above the raw matrix:
 
 - `/usr/local/share/keymaps/pocketchip.kmap` is loaded on boot for Linux tty
