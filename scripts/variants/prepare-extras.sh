@@ -69,6 +69,42 @@ clone_repo "$menu_repo" "$work/pocketchip-menu" "$menu_ref"
 rm -rf "$work/pocketchip-menu/.git"
 cp -a "$work/pocketchip-menu" "$out/pocketchip-menu"
 
+# pygame 2.6 rejects "type" as a key in an event dict, so every screen-update
+# post in the menu (not just the one in main.py) raises ValueError and kills
+# the process on the first touch.  Use a private field name instead.  Fail the
+# build when the upstream source no longer matches, so a menu update cannot
+# silently reintroduce the crash.
+command -v python3 >/dev/null 2>&1 ||
+  die "python3 is required to patch pocketchip-menu"
+python3 - "$out/pocketchip-menu" <<'PY'
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+old_post = 'type="screen_update"'
+new_post = 'kind="screen_update"'
+old_check = "'type' in event.__dict__ and event.__dict__['type'] == 'screen_update'"
+new_check = "event.__dict__.get('kind') == 'screen_update'"
+
+changed = 0
+for path in root.rglob('*.py'):
+    text = path.read_text()
+    updated = text.replace(old_post, new_post).replace(old_check, new_check)
+    if updated != text:
+        path.write_text(updated)
+        changed += 1
+
+leftovers = [
+    str(path.relative_to(root))
+    for path in root.rglob('*.py')
+    if old_post in path.read_text() or old_check in path.read_text()
+]
+if leftovers:
+    sys.exit('pocketchip-menu pygame patch incomplete: ' + ', '.join(leftovers))
+if changed == 0:
+    sys.exit('pocketchip-menu pygame patch found no targets; upstream changed?')
+PY
+
 install -d "$out/apps"
 cp -a "$repo_root/configs/variants/pocketchip-menu-apps/." "$out/apps/"
 
