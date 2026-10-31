@@ -355,8 +355,10 @@ The initramfs loads the staging `r8723bs` driver, scans 2.4 GHz networks, prints
 SSIDs, prompts for SSID and password on the serial console, associates with
 `wpa_supplicant`, obtains a DHCP lease, and waits for a TCP stream on port
 `4242`. The host streams the extracted UBIFS directly into `ubiupdatevol`; the
-initramfs then hashes the written volume and compares it with the baked SHA256
-before rebooting. Credentials are passed through the environment and are never
+initramfs then hashes the first `ROOTFS_UBIFS_SIZE` bytes of the volume and
+compares them with the baked SHA256 before rebooting. The volume itself stays
+autoresized (`ubimkvol -m`), so only the payload prefix belongs to the UBIFS
+image. Credentials are passed through the environment and are never
 stored in the repository, and password echo is disabled so the passphrase does
 not land in the serial log. The PocketCHIP radio is 2.4 GHz only.
 

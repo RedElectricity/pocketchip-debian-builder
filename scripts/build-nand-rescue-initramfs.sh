@@ -204,8 +204,13 @@ verify_payload() {
 }
 
 verify_volume() {
-  log_rescue "verifying written UBI volume"
-  sha="$(busybox cat /dev/ubi0_0 | busybox sha256sum | busybox awk '{print $1}')"
+  # The volume is created with -m and stays autoresized (960 LEBs on the
+  # Toshiba part), while the UBIFS image only fills the first 470 LEBs.
+  # Hash exactly the payload length; hashing the whole volume would always
+  # mismatch.
+  log_rescue "verifying written UBI volume (first $ROOTFS_UBIFS_SIZE bytes)"
+  sha="$(busybox head -c "$ROOTFS_UBIFS_SIZE" /dev/ubi0_0 |
+    busybox sha256sum | busybox awk '{print $1}')"
   log_rescue "volume sha256: $sha"
   [ "$sha" = "$ROOTFS_UBIFS_SHA256" ] ||
     die_rescue "written volume sha256 mismatch: got $sha expected $ROOTFS_UBIFS_SHA256"
