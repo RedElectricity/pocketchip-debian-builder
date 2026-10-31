@@ -96,19 +96,17 @@ The default image uses rxvt-unicode (urxvt) through the `pocketchip-terminal` wr
 
 `xterm` is not installed by default. If it is installed later, `pocketchip-terminal` uses it as the recovery fallback when `urxvt` is missing. The shipped `.Xresources` file also configures that optional path.
 
-## awesome Desktop
+## LXDE Desktop
 
-The default PocketCHIP session is awesome with a 20 px top wibar: the `Menu` launcher, a task list, the Wi-Fi/Bluetooth tray icons, the battery percentage and a clock. The menu launches the terminal, PCManFM, Mousepad, the browser, PICO-8, SunVox, `nm-connection-editor` for Wi-Fi, `blueman-manager` for Bluetooth, the brightness/volume menu, touch calibration, the lock screen, reboot and power off.
+The default PocketCHIP session is LXDE: Openbox plus a 28 px bottom lxpanel with 24 px icons. The panel has the application menu, quick-launch buttons for Terminal, PCManFM, Mousepad and Optional toolkits, the task list, the Wi-Fi/Bluetooth tray and a clock. The application menu also exposes PICO-8, SunVox, brightness/volume and the LXDE settings tools. The panel is configured in `~/.config/lxpanel/LXDE/panels/panel`; `~/.xinitrc` runs `startlxde`.
+
+Openbox keeps its standard bindings; on the PocketCHIP keyboard the useful ones are:
 
 ```text
-Mod+Return              terminal
-Mod+p                   dmenu
-Mod+f                   PCManFM
-Mod+e                   Mousepad
-Mod+h                   toggle the launcher menu
-Mod+Tab / Ctrl+Tab      next window
-Ctrl+Q                  close focused window
-Mod+equal / Mod+minus   backlight up/down
+Alt+F2                  run a command
+Alt+F4                  close focused window
+Alt+Tab                 switch windows
+Alt+space               window menu
 ```
 
 The i3 session remains installed as a fallback. Its sticky-chord and window-management keys still apply when `~/.xinitrc` is changed back to `i3`:
@@ -175,7 +173,7 @@ POCKETCHIP_BOOT_SPLASH=0
 POCKETCHIP_BOOT_SPLASH_HOLD=0
 POCKETCHIP_LOGIN_SPLASH=auto
 POCKETCHIP_LOGIN_SPLASH_HOLD=0
-POCKETCHIP_BROWSER=firefox-esr
+# POCKETCHIP_BROWSER=firefox-esr  (install with pocketchip-toolkits)
 POCKETCHIP_GESTURES=1
 POCKETCHIP_DARK_MODE=1
 POCKETCHIP_TIMEZONE=America/Los_Angeles

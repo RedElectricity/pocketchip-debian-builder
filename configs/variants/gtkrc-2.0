@@ -1,0 +1,5 @@
+# PocketCHIP GTK2 defaults: dark palette, compact Terminus text.
+gtk-theme-name="Adwaita"
+gtk-icon-theme-name="Adwaita"
+gtk-font-name="Terminus 9"
+gtk-cursor-theme-name="Adwaita"

@@ -562,11 +562,18 @@ def configure_rescue_iface(args: argparse.Namespace, iface: str) -> None:
         raise RuntimeError(f"could not assign {args.host_ip}/24 to {iface}")
 
 
-def send_file_to_rescue(args: argparse.Namespace, payload: Path) -> None:
+def send_file_to_rescue(
+    args: argparse.Namespace, payload: Path, serial: "SerialSession | None" = None
+) -> None:
     total = payload.stat().st_size
     deadline = time.time() + args.timeout
     sock = None
     while time.time() < deadline:
+        # Keep draining the console while the device formats UBI. ubiformat
+        # prints progress for every eraseblock; if the host stops reading, the
+        # tty writer blocks and ubiformat never reaches the listener step.
+        if serial is not None:
+            serial.pump(0.2)
         try:
             sock = socket.create_connection((args.device_ip, args.port), timeout=5)
             break
@@ -644,7 +651,7 @@ def rescue_install(args: argparse.Namespace) -> int:
                 iface = pick_rescue_iface(args.net_iface, before_ifaces, args.timeout)
                 print(f"[rescue] host USB network interface: {iface}")
                 configure_rescue_iface(args, iface)
-                send_file_to_rescue(args, ubifs)
+                send_file_to_rescue(args, ubifs, serial)
             elif args.source == "wifi":
                 if not serial.wait_for(r"Wi-Fi SSID:", args.timeout):
                     raise RuntimeError("rescue initramfs did not reach the Wi-Fi prompt")
@@ -672,7 +679,7 @@ def rescue_install(args: argparse.Namespace) -> int:
                     )
                 args.device_ip = match.group(1)
                 print(f"[rescue] device IP {args.device_ip}")
-                send_file_to_rescue(args, ubifs)
+                send_file_to_rescue(args, ubifs, serial)
             else:
                 if not serial.wait_for(r"\[rescue\].*writing USB payload", args.timeout):
                     raise RuntimeError("rescue initramfs did not start the USB payload write step")

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Brightness and volume
+Comment=Backlight and ALSA mixer controls
+Exec=pocketchip-terminal -e pocketchip-control menu
+Icon=preferences-system
+Terminal=false
+Categories=System;Settings;

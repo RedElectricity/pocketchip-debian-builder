@@ -1,0 +1,4 @@
+%pocketchip-setup ALL=(root) NOPASSWD: /usr/local/sbin/pocketchip-toolkits
+%pocketchip-setup ALL=(root) NOPASSWD: /usr/local/sbin/pocketchip-toolkits *
+%sudo ALL=(root) NOPASSWD: /usr/local/sbin/pocketchip-toolkits
+%sudo ALL=(root) NOPASSWD: /usr/local/sbin/pocketchip-toolkits *

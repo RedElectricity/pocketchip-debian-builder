@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=PICO-8
+Comment=Fantasy console
+Exec=pico-8
+Icon=applications-games
+Terminal=false
+Categories=Game;

@@ -1,5 +1,5 @@
 #!/bin/sh
-# PocketCHIP variant: awesome with the wibar launcher.
+# PocketCHIP variant: LXDE with a bottom panel sized for the 480x272 screen.
 
 if [ -r /etc/default/pocketchip-ui ]; then
   # shellcheck disable=SC1091
@@ -23,6 +23,11 @@ xset s 600 600 2>/dev/null || true
 xset +dpms 2>/dev/null || true
 xset dpms 600 600 600 2>/dev/null || true
 
+# Solid dark root window behind the LXDE desktop.
+if command -v xsetroot >/dev/null 2>&1; then
+  xsetroot -solid '#32302f' 2>/dev/null || true
+fi
+
 if command -v unclutter >/dev/null 2>&1; then
   unclutter -idle 1 -root &
 fi
@@ -34,7 +39,7 @@ if command -v gsettings >/dev/null 2>&1; then
   gsettings set org.xfce.mousepad.preferences.view color-scheme 'oblivion' 2>/dev/null || true
 fi
 
-# Tray icons for the Wi-Fi and Bluetooth settings in the wibar.
+# Tray icons for the Wi-Fi and Bluetooth settings.
 if command -v nm-applet >/dev/null 2>&1; then
   nm-applet --indicator >/dev/null 2>&1 &
 fi
@@ -42,4 +47,7 @@ if command -v blueman-applet >/dev/null 2>&1; then
   blueman-applet >/dev/null 2>&1 &
 fi
 
-exec awesome
+if command -v startlxde >/dev/null 2>&1; then
+  exec startlxde
+fi
+exec lxsession -e LXDE

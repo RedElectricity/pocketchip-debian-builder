@@ -720,6 +720,7 @@ install -m 0755 "$repo_root/configs/pocketchip-first-login-password" "$rootfs/us
 install -d -m 0755 "$rootfs/usr/local/sbin"
 install -m 0755 "$repo_root/configs/pocketchip-disable-autologin" "$rootfs/usr/local/sbin/pocketchip-disable-autologin"
 install -m 0755 "$repo_root/configs/pocketchip-power-root" "$rootfs/usr/local/sbin/pocketchip-power-root"
+install -m 0755 "$repo_root/configs/pocketchip-toolkits" "$rootfs/usr/local/sbin/pocketchip-toolkits"
 install -m 0755 "$repo_root/configs/pocketchip-framebuffer-splash" "$rootfs/usr/local/sbin/pocketchip-framebuffer-splash"
 
 install -d -m 0755 "$rootfs/usr/share/pocketchip"
@@ -882,9 +883,11 @@ install -d -m 0750 "$rootfs/etc/sudoers.d"
 install -m 0440 "$repo_root/configs/sudoers-pocketchip-startx" "$rootfs/etc/sudoers.d/pocketchip-startx"
 install -m 0440 "$repo_root/configs/sudoers-pocketchip-first-login" "$rootfs/etc/sudoers.d/pocketchip-first-login"
 install -m 0440 "$repo_root/configs/sudoers-pocketchip-power" "$rootfs/etc/sudoers.d/pocketchip-power"
+install -m 0440 "$repo_root/configs/sudoers-pocketchip-toolkits" "$rootfs/etc/sudoers.d/pocketchip-toolkits"
 chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-startx
 chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-first-login
 chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-power
+chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-toolkits
 
 install -m 0644 "$repo_root/configs/pocketchip-keymap.service" "$rootfs/etc/systemd/system/pocketchip-keymap.service"
 install -d -m 0755 "$rootfs/etc/systemd/system/multi-user.target.wants"

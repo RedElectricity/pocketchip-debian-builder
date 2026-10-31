@@ -1,7 +1,16 @@
-# PocketCHIP variant: awesome with the wibar launcher.
+# PocketCHIP variant: LXDE desktop with a touch-sized bottom panel.
 
-# Window manager. i3 stays installed as a fallback session.
-awesome
+# Desktop: LXDE (Openbox + lxpanel). The panel is configured for the 480x272
+# touchscreen; i3 stays installed as a fallback session.
+lxappearance
+lxde-common
+lxinput
+lxmenu-data
+lxpanel
+lxrandr
+lxsession
+lxsession-edit
+openbox
 
 # Desktop runtime and PICO-8/SunVox dependencies.
 python3-gi
@@ -13,50 +22,12 @@ libgl1
 libegl1
 libgles2
 
-# Applications in the wibar menu.
+# Applications used from the LXDE panel and menu.
 pcmanfm
 mousepad
 
-# Security toolkit. The PocketCHIP is a handheld field unit, so the image
-# carries a small set of wireless, network, web and firmware tools. Everything
-# here is in trixie armhf; Kali-only packages (metasploit, impacket-scripts,
-# responder, seclists) are not packaged for Debian and stay out.
-aircrack-ng
-arping
-bettercap
-binwalk
-crunch
-dsniff
-ettercap-text-only
-foremost
-gobuster
-hcxdumptool
-hcxtools
-hping3
-john
-macchanger
-masscan
-ncrack
-p0f
-proxychains4
-python3-scapy
-sqlmap
-sslscan
-tcpflow
-testssl.sh
-upx-ucl
-yara
-
-# OSINT and data collection. theHarvester itself is not packaged for Debian and
-# its current upstream needs Python 3.14 plus Playwright, so recon-ng and the
-# DNS/whois tooling cover the same collection stage. Shodan and Censys need the
-# user's own API keys.
-ddgr
-dnsenum
-dnsrecon
-fierce
-python3-censys
-python3-shodan
-recon-ng
-wafw00f
-whois
+# The security and OSINT toolkits are not part of the default image: they made
+# the NAND rootfs unnecessarily large on a device that also carries PICO-8 and
+# SunVox. `pocketchip-toolkits` installs them on demand, in groups, from the
+# LXDE menu (see docs/variants.md). Everyday network diagnostics such as nmap,
+# tcpdump, iw and wireless-tools stay in the base package list.

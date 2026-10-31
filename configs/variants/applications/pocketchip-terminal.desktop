@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Terminal
+Comment=rxvt-unicode terminal for the PocketCHIP
+Exec=pocketchip-terminal
+Icon=utilities-terminal
+Terminal=false
+Categories=System;TerminalEmulator;

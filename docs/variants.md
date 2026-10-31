@@ -5,7 +5,7 @@ This fork adds two prebuilt image flavours on top of the upstream builder. Both 
 | | PocketCHIP | Desktop CHIP |
 | --- | --- | --- |
 | Display | PocketCHIP LCD (pocketchip-v73 overlay) | CHIP HDMI adapter (dip-hdmi overlay) |
-| Session | `awesome` with a wibar launcher (apps, Wi-Fi, Bluetooth, settings) | XFCE |
+| Session | LXDE (Openbox + lxpanel) with a touch-sized bottom panel | XFCE |
 | Fallback | `i3` still installed | none |
 | Extras | PICO-8 0.2.4, SunVox 2.1.4d (lofi), pocketchip-batt binary | PICO-8/SunVox not installed |
 | Keyboard | PocketCHIP matrix keymap and Fn layers | USB keyboard, default keymap |
@@ -117,19 +117,19 @@ Make sure `~/.local/bin` is on `PATH`, then verify with `sunxi-fel` (it prints u
 
 ### PocketCHIP
 
-- `~/.xinitrc` starts `awesome`; `~/.config/awesome/rc.lua` builds the top wibar with the launcher menu, task list, Wi-Fi/Bluetooth tray icons, battery and clock. The menu opens the terminal, file manager, editor, browser, PICO-8, SunVox, `nm-connection-editor` for Wi-Fi, `blueman-manager` for Bluetooth, brightness/volume, touch calibration, lock and power actions.
-- `Mod1+h` (Alt+H) toggles the launcher menu. `Mod1+Tab` and `Ctrl+Tab` cycle windows, `Mod1+Return` opens the terminal, `Mod1+p` opens `dmenu_run`, `Mod1+f` opens the file manager, `Mod1+e` opens the editor, `Ctrl+Q` closes the focused window. `Mod1+equal`/`Mod1+minus` change the backlight.
-- The upstream `i3` session is still installed. To go back to it, edit `~/.xinitrc` and replace `awesome` with `i3`.
+- `~/.xinitrc` starts LXDE (`startlxde`). The bottom lxpanel is 28 px high with 24 px icons: application menu, quick-launch buttons for Terminal, PCManFM, Mousepad and Optional toolkits, the task list, the Wi-Fi/Bluetooth tray and the clock. The menu also exposes PICO-8, SunVox, brightness/volume and the LXDE settings tools.
+- Touch calibration, lock, reboot and power off stay available through `pocketchip-touch-calibrate`, `i3lock` and `pocketchip-power`; the panel menu has Run and Logout entries.
+- The `i3` session is still installed as a fallback. To use it, edit `~/.xinitrc` and replace `startlxde` with `i3`.
 - `pocketchip-batt` is compiled into the image and its unit is installed, but it is **not enabled**: on a mainline kernel `upower` already reports the AXP209 battery through the kernel driver, and the daemon writes to the same I2C device. Enable it manually with `sudo systemctl enable --now pocketchip-one` if you need the legacy `/usr/lib/pocketchip-batt` files.
 - PICO-8 and SunVox are proprietary binaries downloaded from their upstream URLs at build time. They are not redistributed by this repository.
 
-### Security toolkit
+### Optional toolkits
 
-The PocketCHIP image carries a compact security toolkit, because the hardware was designed as a handheld hacking device: `aircrack-ng`, `hcxdumptool`/`hcxtools`, `bettercap`, `ettercap-text-only`, `dsniff`, `tcpflow`, `p0f`, `masscan`, `arping`, `hping3`, `proxychains4`, `python3-scapy`, `sqlmap`, `gobuster`, `sslscan`, `testssl.sh`, `ncrack`, `crunch`, `john`, `binwalk`, `yara`, `foremost`, `upx-ucl` and `macchanger`, on top of the `nmap`, `tcpdump`, `bluez`, `iw` and `wpa_supplicant` already in the base set. The installed delta is roughly 180 MiB.
+The default image omits the security, OSINT and browser packages so the NAND rootfs stays small. `pocketchip-toolkits` installs them on demand, by group, from the LXDE menu (or `sudo -n pocketchip-toolkits menu`): `browser` (netsurf-gtk and firefox-esr), `net` (`arping`, `hping3`, `masscan`, `p0f`, `tcpflow`, `sslscan`, `testssl.sh`, `python3-scapy`), `wireless` (`aircrack-ng`, `hcxdumptool`/`hcxtools`, `macchanger`), `forensics` (`binwalk`, `foremost`, `upx-ucl`, `yara`, `john`), `web` (`gobuster`, `sqlmap`, `wafw00f`), `osint` (`ddgr`, `dnsenum`, `dnsrecon`, `fierce`, `recon-ng`, `python3-shodan`, `python3-censys`, `whois`) and `pentest` (`bettercap`, `crunch`, `dsniff`, `ettercap-text-only`, `ncrack`, `proxychains4`). `nmap`, `tcpdump`, `bluez`, `iw` and `wpa_supplicant` stay in the base set.
 
-For data collection the image adds `recon-ng`, `dnsrecon`, `dnsenum`, `fierce`, `whois`, `wafw00f`, `ddgr` and the `python3-shodan`/`python3-censys` clients, about 55 MiB of that total. `theHarvester` itself cannot be installed here: it is not packaged for Debian, every 4.x release depends on Playwright, and Playwright publishes no 32-bit ARM build, so the dependency is unavailable regardless of the Python version. `recon-ng` covers the same collection stage; Shodan and Censys need your own API keys.
+The `osint` group covers data collection. `theHarvester` cannot be installed here: it is not packaged for Debian, every 4.x release depends on Playwright, and Playwright publishes no 32-bit ARM build, so the dependency is unavailable regardless of the Python version. `recon-ng` covers the same collection stage; Shodan and Censys need your own API keys.
 
-The onboard RTL8723BS radio is 2.4 GHz only, its staging driver has weak monitor-mode support and no injection, so the wireless tools are only fully useful with a USB adapter that supports monitor mode and injection. `metasploit-framework`, `responder`, `impacket-scripts`, `seclists` and `searchsploit` are Kali packages and are not in Debian armhf; Metasploit would also need Ruby and PostgreSQL and would be unusable on this CPU and RAM budget. Heavier Debian tools such as `wifite`, `tshark`, `whatweb`, `ffuf`, `smbmap`, `python3-impacket`, `hydra`, `medusa`, `sleuthkit`, `testdisk`, `gdb` and `ubertooth` are left out to keep the NAND image inside its budget, and can be added to `configs/variants/pocketchip.packages` when building a USB-only image.
+The onboard RTL8723BS radio is 2.4 GHz only, its staging driver has weak monitor-mode support and no injection, so the wireless tools are only fully useful with a USB adapter that supports monitor mode and injection. `metasploit-framework`, `responder`, `impacket-scripts`, `seclists` and `searchsploit` are Kali packages and are not in Debian armhf; Metasploit would also need Ruby and PostgreSQL and would be unusable on this CPU and RAM budget. Heavier Debian tools such as `wifite`, `tshark`, `whatweb`, `ffuf`, `smbmap`, `python3-impacket`, `hydra`, `medusa`, `sleuthkit`, `testdisk`, `gdb` and `ubertooth` are left out of the groups, and can be added to `configs/variants/pocketchip.packages` when building a USB-only image.
 
 ### Desktop CHIP
 

@@ -12,12 +12,16 @@ extras=/opt/pocketchip-extras
 
 export DEBIAN_FRONTEND=noninteractive
 
-install -d -m 0755 "$home/.config/awesome"
-sed "s#@HOME@#$home#g" "$extras/awesome/rc.lua" > "$home/.config/awesome/rc.lua"
-chmod 0644 "$home/.config/awesome/rc.lua"
-install -m 0644 "$extras/awesome/blank_ptr.xbm" "$home/.config/awesome/blank_ptr.xbm"
+install -d -m 0755 "$home/.config/lxpanel/LXDE/panels"
+install -m 0644 "$extras/lxde/panel" "$home/.config/lxpanel/LXDE/panels/panel"
+install -m 0644 "$extras/lxde/gtkrc-2.0" "$home/.gtkrc-2.0"
+install -d -m 0755 "$home/.config/gtk-3.0"
+install -m 0644 "$extras/lxde/settings.ini" "$home/.config/gtk-3.0/settings.ini"
 
-install -m 0755 "$extras/xinitrc-awesome" "$home/.xinitrc"
+install -d -m 0755 /usr/share/applications
+install -m 0644 "$extras/lxde/applications/"*.desktop /usr/share/applications/
+
+install -m 0755 "$extras/xinitrc-lxde" "$home/.xinitrc"
 
 # --- PICO-8 -----------------------------------------------------------------
 install -d -m 0755 /usr/lib/pico-8
@@ -49,7 +53,7 @@ L /usr/lib/pocketchip-batt - - - - /run/pocketchip-batt
 EOF
 
 chown -R "$(id -u "$user"):$(id -g "$user")" \
-  "$home/.config/awesome" "$home/.xinitrc"
+  "$home/.config/lxpanel" "$home/.config/gtk-3.0" "$home/.gtkrc-2.0" "$home/.xinitrc"
 
 rm -rf "$extras"
 

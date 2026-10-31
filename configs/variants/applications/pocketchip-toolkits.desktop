@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Optional toolkits
+Comment=Install security and browser packages on demand
+Exec=pocketchip-terminal -e sudo -n pocketchip-toolkits menu
+Icon=applications-system
+Terminal=false
+Categories=System;Settings;

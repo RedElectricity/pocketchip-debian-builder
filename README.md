@@ -138,7 +138,7 @@ make publish-check
 
 ## Image Variants
 
-This fork ships two CI-built flavours: a PocketCHIP image with [awesome](https://awesomewm.org/) and a wibar launcher for the terminal, file manager, editor, Wi-Fi, Bluetooth and settings apps, plus PICO-8 and SunVox, and a Desktop CHIP image with XFCE on the HDMI adapter. `.github/workflows/build.yml` builds both on GitHub Actions and publishes the USB rootfs image, U-Boot and DTBs. See `docs/variants.md` for the build matrix, variant details, flashing steps, and the macOS FEL caveat.
+This fork ships two CI-built flavours: a PocketCHIP image with LXDE (Openbox and a bottom lxpanel sized for the touchscreen) for the terminal, file manager, editor, Wi-Fi, Bluetooth and settings apps, plus PICO-8 and SunVox, and a Desktop CHIP image with XFCE on the HDMI adapter. Browsers and the security/OSINT toolkits are installed on demand with `pocketchip-toolkits`, so the default rootfs stays small. `.github/workflows/build.yml` builds both on GitHub Actions and publishes the USB rootfs image, U-Boot and DTBs. See `docs/variants.md` for the build matrix, variant details, flashing steps, and the macOS FEL caveat.
 
 ## Project Layout
 
@@ -159,7 +159,7 @@ This fork ships two CI-built flavours: a PocketCHIP image with [awesome](https:/
 - Boot: mainline U-Boot for FEL/USB bring-up with USB rootfs by label
   `pocketroot`; patched legacy CHIP U-Boot for the experimental NAND/SLC rescue
   installer path.
-- UI: Xorg plus `awesome` with a wibar launcher; `i3` remains as a fallback session
+- UI: Xorg plus LXDE (Openbox + lxpanel); `i3` remains as a fallback session
 - Terminal: rxvt-unicode (urxvt) through `pocketchip-terminal`, starting far
   faster than a GTK/VTE terminal on the R8. The font list falls back from
   Terminus to Unifont for CJK and box-drawing glyphs. `xterm` is not installed;

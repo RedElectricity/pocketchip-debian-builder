@@ -62,10 +62,12 @@ fi
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
-install -d "$out/awesome"
-cp -a "$repo_root/configs/variants/awesome-rc.lua" "$out/awesome/rc.lua"
-cp -a "$repo_root/configs/variants/awesome-blank-ptr.xbm" "$out/awesome/blank_ptr.xbm"
-install -m 0755 "$repo_root/configs/variants/xinitrc-awesome" "$out/xinitrc-awesome"
+install -d "$out/lxde/applications"
+install -m 0644 "$repo_root/configs/variants/lxpanel-panel" "$out/lxde/panel"
+install -m 0755 "$repo_root/configs/variants/xinitrc-lxde" "$out/xinitrc-lxde"
+install -m 0644 "$repo_root/configs/variants/gtkrc-2.0" "$out/lxde/gtkrc-2.0"
+install -m 0644 "$repo_root/configs/variants/gtk-3.0/settings.ini" "$out/lxde/settings.ini"
+cp -a "$repo_root/configs/variants/applications/." "$out/lxde/applications/"
 
 install -d "$out/bin"
 install -m 0755 "$repo_root/configs/variants/bin/pico-8" "$out/bin/pico-8"

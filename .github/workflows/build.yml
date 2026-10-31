@@ -1,7 +1,7 @@
 name: build images
 
 # Builds the same Debian trixie armhf rootfs in two flavours:
-#   pocketchip - awesome + pocketchip-menu home screen, PICO-8, SunVox
+#   pocketchip - LXDE desktop, PICO-8, SunVox, optional toolkits
 #   desktop    - XFCE on the CHIP HDMI adapter
 # Both produce a USB/FEL-bootable ext4 image plus the U-Boot binary and DTBs
 # needed to boot it.

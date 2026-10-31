@@ -1,0 +1,193 @@
+#!/bin/sh
+# Optional security toolkits for the PocketCHIP image.
+#
+# The default image keeps only the everyday network diagnostics. These groups
+# are installed on demand so the rootfs stays small; run as root, normally via
+# the LXDE menu entry or `sudo -n pocketchip-toolkits menu`.
+set -eu
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+export DEBIAN_FRONTEND=noninteractive
+
+groups="browser net wireless forensics web osint pentest"
+
+packages_browser="firefox-esr netsurf-gtk"
+packages_net="arping hping3 masscan p0f tcpflow sslscan testssl.sh python3-scapy"
+packages_wireless="aircrack-ng hcxdumptool hcxtools macchanger"
+packages_forensics="binwalk foremost upx-ucl yara john"
+packages_web="gobuster sqlmap wafw00f"
+packages_osint="ddgr dnsenum dnsrecon fierce recon-ng python3-shodan python3-censys whois"
+packages_pentest="bettercap crunch dsniff ettercap-text-only ncrack proxychains4"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  pocketchip-toolkits list
+  pocketchip-toolkits install GROUP...
+  pocketchip-toolkits menu
+  pocketchip-toolkits status
+
+Groups:
+  browser    netsurf-gtk (light) and firefox-esr (full)
+  net        packet, port and TLS auditing tools
+  wireless   Wi-Fi capture and monitor-mode tools
+  forensics  firmware, file carving and binary analysis
+  web        web content discovery and exploitation helpers
+  osint      DNS, whois and open-source collection
+  pentest    traffic interception and password cracking
+
+The default image omits these groups to keep the NAND rootfs small. Installing
+them needs a network connection and root; the LXDE menu runs this script with
+a narrow sudo rule.
+EOF
+}
+
+group_packages() {
+  case "$1" in
+    browser) printf '%s\n' "$packages_browser" ;;
+    net) printf '%s\n' "$packages_net" ;;
+    wireless) printf '%s\n' "$packages_wireless" ;;
+    forensics) printf '%s\n' "$packages_forensics" ;;
+    web) printf '%s\n' "$packages_web" ;;
+    osint) printf '%s\n' "$packages_osint" ;;
+    pentest) printf '%s\n' "$packages_pentest" ;;
+    *) return 1 ;;
+  esac
+}
+
+group_description() {
+  case "$1" in
+    browser) printf '%s\n' 'netsurf-gtk and firefox-esr' ;;
+    net) printf '%s\n' 'packet, port and TLS auditing' ;;
+    wireless) printf '%s\n' 'Wi-Fi capture and monitor mode' ;;
+    forensics) printf '%s\n' 'firmware, carving and binary analysis' ;;
+    web) printf '%s\n' 'content discovery and web testing' ;;
+    osint) printf '%s\n' 'DNS, whois and OSINT collection' ;;
+    pentest) printf '%s\n' 'traffic interception and cracking' ;;
+    *) return 1 ;;
+  esac
+}
+
+is_installed() {
+  dpkg-query -W -f='${Status}' "$1" 2>/dev/null | grep -q 'install ok installed'
+}
+
+show_status() {
+  for group in $groups; do
+    total=0
+    present=0
+    for pkg in $(group_packages "$group"); do
+      total=$((total + 1))
+      if is_installed "$pkg"; then
+        present=$((present + 1))
+      fi
+    done
+    if [ "$present" -eq "$total" ]; then
+      state=installed
+    elif [ "$present" -eq 0 ]; then
+      state=missing
+    else
+      state="partial ($present/$total)"
+    fi
+    printf '%-10s %-12s %s\n' "$group" "$state" "$(group_description "$group")"
+  done
+}
+
+list_groups() {
+  for group in $groups; do
+    printf '%s - %s\n' "$group" "$(group_description "$group")"
+    printf '    %s\n' "$(group_packages "$group")"
+  done
+}
+
+require_network() {
+  if ! ip route show default 2>/dev/null | grep -q 'default'; then
+    printf 'No default route. Connect to Wi-Fi before installing packages.\n' >&2
+    exit 1
+  fi
+}
+
+install_groups() {
+  [ "$#" -gt 0 ] || { usage >&2; exit 2; }
+  pkgs=""
+  for group in "$@"; do
+    list="$(group_packages "$group")" ||
+      { printf 'Unknown group: %s\n' "$group" >&2; exit 2; }
+    pkgs="$pkgs $list"
+  done
+  require_network
+  printf 'Installing:%s\n' "$pkgs"
+  apt-get update
+  # shellcheck disable=SC2086
+  apt-get install -y --no-install-recommends $pkgs
+  apt-get clean
+  rm -rf /var/lib/apt/lists/*
+  printf '\nDone. Installed groups: %s\n' "$*"
+}
+
+menu() {
+  while :; do
+    printf '\n== Optional toolkits ==\n'
+    i=1
+    for group in $groups; do
+      printf '%s) %-10s %s\n' "$i" "$group" "$(group_description "$group")"
+      i=$((i + 1))
+    done
+    printf 's) status\nl) list packages\nq) quit\n\n'
+    printf 'Select group numbers (space separated), or s/l/q: '
+    IFS= read -r answer || exit 0
+    case "$answer" in
+      q|Q) exit 0 ;;
+      s|S) show_status ;;
+      l|L) list_groups ;;
+      '')
+        ;;
+      *)
+        chosen=""
+        for item in $answer; do
+          case "$item" in
+            *[!0-9]*)
+              printf 'Ignoring invalid selection: %s\n' "$item"
+              chosen=""
+              break
+              ;;
+          esac
+          idx=1
+          found=""
+          for group in $groups; do
+            if [ "$idx" -eq "$item" ]; then
+              found="$group"
+              break
+            fi
+            idx=$((idx + 1))
+          done
+          if [ -z "$found" ]; then
+            printf 'No group number %s\n' "$item"
+            chosen=""
+            break
+          fi
+          chosen="$chosen $found"
+        done
+        if [ -n "$chosen" ]; then
+          # shellcheck disable=SC2086
+          install_groups $chosen || printf 'Install failed.\n' >&2
+        fi
+        ;;
+    esac
+  done
+}
+
+[ "$(id -u)" -eq 0 ] || {
+  printf 'Run as root, e.g. sudo -n pocketchip-toolkits menu\n' >&2
+  exit 1
+}
+
+case "${1:-}" in
+  list) list_groups ;;
+  status) show_status ;;
+  install) shift; install_groups "$@" ;;
+  menu) menu ;;
+  -h|--help|help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac

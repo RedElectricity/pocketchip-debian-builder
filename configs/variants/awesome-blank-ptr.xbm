@@ -1,4 +1,0 @@
-#define blank_ptr_width 1
-#define blank_ptr_height 1
-static unsigned char blank_ptr_bits[] = {
-  0x00 };

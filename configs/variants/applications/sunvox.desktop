@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=SunVox
+Comment=Tracker and synthesizer
+Exec=sunvox
+Icon=audio-x-generic
+Terminal=false
+Categories=AudioVideo;Audio;
