@@ -21,6 +21,14 @@ install -m 0644 "$extras/lxde/settings.ini" "$home/.config/gtk-3.0/settings.ini"
 install -d -m 0755 /usr/share/applications
 install -m 0644 "$extras/lxde/applications/"*.desktop /usr/share/applications/
 
+# LXDE starts the desktop instance with --profile LXDE, so mirror the file
+# manager defaults there as well (single click, 480x252 windows).
+install -d -m 0755 "$home/.config/pcmanfm/LXDE"
+if [ -f "$home/.config/pcmanfm/default/pcmanfm.conf" ]; then
+  install -m 0644 "$home/.config/pcmanfm/default/pcmanfm.conf" \
+    "$home/.config/pcmanfm/LXDE/pcmanfm.conf"
+fi
+
 install -m 0755 "$extras/xinitrc-lxde" "$home/.xinitrc"
 
 # --- PICO-8 -----------------------------------------------------------------
@@ -53,7 +61,8 @@ L /usr/lib/pocketchip-batt - - - - /run/pocketchip-batt
 EOF
 
 chown -R "$(id -u "$user"):$(id -g "$user")" \
-  "$home/.config/lxpanel" "$home/.config/gtk-3.0" "$home/.gtkrc-2.0" "$home/.xinitrc"
+  "$home/.config/lxpanel" "$home/.config/gtk-3.0" "$home/.config/pcmanfm" \
+  "$home/.gtkrc-2.0" "$home/.xinitrc"
 
 rm -rf "$extras"
 
