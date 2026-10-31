@@ -93,19 +93,22 @@ zstd
 
 # Audio/display/desktop
 alsa-utils
+blueman
 brightnessctl
 dmenu
 firefox-esr
 fonts-dejavu-core
 fonts-font-awesome
 fonts-powerline
+fonts-terminus-otb
 fonts-unifont
 i3lock
 i3-wm
 i3status
 lisgd
 libinput-tools
-sakura
+network-manager-applet
+rxvt-unicode
 upower
 x11-xserver-utils
 xinit

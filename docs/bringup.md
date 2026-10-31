@@ -85,33 +85,35 @@ Expected first-pass outcomes:
 - Backlight brightness can be adjusted through sysfs.
 - Wi-Fi enumerates; firmware may still need iteration.
 - `zsh`, `tmux`, `nvim`, and `startx` all run.
-- `pocketchip-terminal` starts Sakura/VTE when available and falls back to
-  xterm for recovery when xterm is manually installed.
+- `pocketchip-terminal` starts rxvt-unicode (urxvt) and falls back to xterm
+  only when xterm is installed manually.
 - Terminal prompt/status glyphs render through the packaged Powerline, Font
   Awesome, and Unifont coverage.
 
 ## Terminal Stack
 
-The default image uses Sakura/VTE through the `pocketchip-terminal` wrapper.
-This gives better UTF-8, Nerd Font-adjacent prompt glyph, remote tmux, and TUI
-behavior than xterm on the small PocketCHIP LCD. The wrapper accepts the subset
-of xterm-style arguments used by the image, including `-geometry`, `-hold`, and
-`-e`, so i3 bindings and helper menus do not need to know which terminal is
-installed.
+The default image uses rxvt-unicode (urxvt) through the `pocketchip-terminal` wrapper. It starts in a fraction of the time of a GTK/VTE terminal on the R8, keeps 256-color and tmux behavior, and uses Terminus with Unifont as the fallback for CJK and box-drawing glyphs. The wrapper accepts the subset of xterm-style arguments used by the image, including `-geometry`, `-hold`, and `-e`, so key bindings and helper menus do not need to know which terminal is installed.
 
-`xterm` is not installed by default. If it is manually installed later,
-`pocketchip-terminal` can still use it as a recovery fallback when Sakura is not
-available. The shipped `.Xresources` file only applies to that optional fallback
-path.
+`xterm` is not installed by default. If it is installed later, `pocketchip-terminal` uses it as the recovery fallback when `urxvt` is missing. The shipped `.Xresources` file also configures that optional path.
 
-Useful terminal/session keys:
+## awesome Desktop
+
+The default PocketCHIP session is awesome with a 20 px top wibar: the `Menu` launcher, a task list, the Wi-Fi/Bluetooth tray icons, the battery percentage and a clock. The menu launches the terminal, PCManFM, Mousepad, the browser, PICO-8, SunVox, `nm-connection-editor` for Wi-Fi, `blueman-manager` for Bluetooth, the brightness/volume menu, touch calibration, the lock screen, reboot and power off.
 
 ```text
-Ctrl++                  Sakura terminal zoom in
-Ctrl+-                  Sakura terminal zoom out
-Mod+Shift+=             send terminal zoom in to focused app
-Mod+Shift+-             send terminal zoom out to focused app
-Mod+z then = or -       easier sticky chord for the same zoom actions
+Mod+Return              terminal
+Mod+p                   dmenu
+Mod+f                   PCManFM
+Mod+e                   Mousepad
+Mod+h                   toggle the launcher menu
+Mod+Tab / Ctrl+Tab      next window
+Ctrl+Q                  close focused window
+Mod+equal / Mod+minus   backlight up/down
+```
+
+The i3 session remains installed as a fallback. Its sticky-chord and window-management keys still apply when `~/.xinitrc` is changed back to `i3`:
+
+```text
 Enter then ~.           OpenSSH local escape to disconnect a stuck SSH session
 Mod+Backspace           send the OpenSSH disconnect escape to focused terminal
 Mod+Shift+Backspace     hard close focused window
@@ -120,7 +122,7 @@ Mod+Shift+Backspace     hard close focused window
 The physical top row is intentionally mapped to match its key labels on the
 normal and Fn/AltGr layers. It is not used as a hidden F-key row because a
 latched Fn/Mode_switch state can otherwise make terminal input accidentally
-emit F1-F12 or toggle Sakura fullscreen.
+emit F1-F12 or trigger unrelated shortcuts.
 
 For small-keyboard usability, `Mod+z` opens a short sticky shifted-command mode
 in i3. Press and release `Mod+z`, then press the normal action key within about

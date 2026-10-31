@@ -52,12 +52,10 @@ the chord mode accepts that too.
 
 | Key | Action |
 | --- | --- |
-| Ctrl++ | Sakura terminal zoom in |
-| Ctrl+- | Sakura terminal zoom out |
-| Mod+Shift+= | send terminal zoom in to focused app |
-| Mod+Shift+- | send terminal zoom out to focused app |
-| Mod+z then = / - | send terminal zoom in/out to focused app |
-| Ctrl+Shift+c / Ctrl+Shift+v | copy / paste in Sakura |
+| Shift+Insert | paste into rxvt-unicode |
+| Mod+Shift+= | send Ctrl+plus to the focused app |
+| Mod+Shift+- | send Ctrl+minus to the focused app |
+| Mod+z then = / - | same, via the sticky chord |
 | Enter then `~.` | OpenSSH escape to disconnect a stuck SSH session |
 | Mod+Backspace | send OpenSSH disconnect escape to focused terminal |
 | Mod+Shift+Backspace | hard close focused window |

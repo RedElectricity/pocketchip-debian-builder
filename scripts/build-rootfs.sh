@@ -618,8 +618,11 @@ install -m 0644 "$repo_root/configs/xinitrc" "$user_home/.xinitrc"
 install -m 0644 "$repo_root/configs/tmux.conf" "$user_home/.tmux.conf"
 install -m 0644 "$repo_root/configs/Xresources" "$user_home/.Xresources"
 install -m 0644 "$repo_root/configs/pocketchip.Xmodmap" "$user_home/.Xmodmap"
-install -d -m 0755 "$user_home/.config/sakura"
-install -m 0644 "$repo_root/configs/sakura.conf" "$user_home/.config/sakura/sakura.conf"
+
+# Single-click opens items, which is much easier on the resistive touch panel.
+install -d -m 0755 "$user_home/.config/pcmanfm/default"
+install -m 0644 "$repo_root/configs/pcmanfm.conf" \
+  "$user_home/.config/pcmanfm/default/pcmanfm.conf"
 install -d -m 0755 "$user_home/.config/i3"
 install -m 0644 "$repo_root/configs/i3-config" "$user_home/.config/i3/config"
 install -d -m 0755 "$user_home/.config/nvim"
@@ -859,6 +862,13 @@ if [[ -e "$rootfs/usr/lib/systemd/system/ssh.service" ]]; then
   ln -sfn /usr/lib/systemd/system/ssh.service \
     "$rootfs/etc/systemd/system/multi-user.target.wants/ssh.service"
   rm -f "$rootfs/etc/systemd/system/sockets.target.wants/ssh.socket"
+fi
+
+# blueman needs bluetoothd running when the desktop starts.
+if [[ -e "$rootfs/usr/lib/systemd/system/bluetooth.service" ]]; then
+  install -d -m 0755 "$rootfs/etc/systemd/system/multi-user.target.wants"
+  ln -sfn /usr/lib/systemd/system/bluetooth.service \
+    "$rootfs/etc/systemd/system/multi-user.target.wants/bluetooth.service"
 fi
 
 install -d -m 0755 "$rootfs/etc/fonts/conf.d"

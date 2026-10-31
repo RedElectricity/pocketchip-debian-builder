@@ -15,3 +15,30 @@ XTerm*selectToClipboard: true
 XTerm*loginShell: true
 XTerm*eightBitInput: false
 XTerm*metaSendsEscape: true
+
+! rxvt-unicode, the default PocketCHIP terminal (awesome-ban dark palette).
+URxvt.scrollBar: false
+URxvt.internalBorder: 2
+URxvt.cursorBlink: false
+URxvt.saveLines: 5000
+URxvt.termName: rxvt-unicode-256color
+URxvt.font: xft:DejaVu Sans Mono:pixelsize=12,xft:Unifont:pixelsize=12
+URxvt.background: #32302f
+URxvt.foreground: #ebdbb2
+URxvt.cursorColor: #4e9699
+URxvt.color0: #32302f
+URxvt.color8: #5e5e5e
+URxvt.color1: #d64d4d
+URxvt.color9: #ff7b72
+URxvt.color2: #00b159
+URxvt.color10: #62d98a
+URxvt.color3: #cc9c00
+URxvt.color11: #f0c674
+URxvt.color4: #428bca
+URxvt.color12: #83aee3
+URxvt.color5: #8c8ccd
+URxvt.color13: #b3b3e6
+URxvt.color6: #4e9699
+URxvt.color14: #7fc4c7
+URxvt.color7: #ebdbb2
+URxvt.color15: #ffffff

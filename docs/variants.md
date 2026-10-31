@@ -5,7 +5,7 @@ This fork adds two prebuilt image flavours on top of the upstream builder. Both 
 | | PocketCHIP | Desktop CHIP |
 | --- | --- | --- |
 | Display | PocketCHIP LCD (pocketchip-v73 overlay) | CHIP HDMI adapter (dip-hdmi overlay) |
-| Session | `awesome` + [pocketchip-menu](https://github.com/omgmog/pocketchip-menu) as the home screen | XFCE |
+| Session | `awesome` with a wibar launcher (apps, Wi-Fi, Bluetooth, settings) | XFCE |
 | Fallback | `i3` still installed | none |
 | Extras | PICO-8 0.2.4, SunVox 2.1.4d (lofi), pocketchip-batt binary | PICO-8/SunVox not installed |
 | Keyboard | PocketCHIP matrix keymap and Fn layers | USB keyboard, default keymap |
@@ -117,8 +117,8 @@ Make sure `~/.local/bin` is on `PATH`, then verify with `sunxi-fel` (it prints u
 
 ### PocketCHIP
 
-- `~/.xinitrc` starts `awesome`; `~/.config/awesome/rc.lua` launches `pocketchip-menu/load.sh` fullscreen and keeps its window on top.
-- `Mod1+h` (Alt+H) relaunches the home screen if it is closed. `Mod1+Tab` and `Ctrl+Tab` cycle windows, `Mod1+Return` opens `dmenu_run`, `Ctrl+Q` closes the focused window (never the menu).
+- `~/.xinitrc` starts `awesome`; `~/.config/awesome/rc.lua` builds the top wibar with the launcher menu, task list, Wi-Fi/Bluetooth tray icons, battery and clock. The menu opens the terminal, file manager, editor, browser, PICO-8, SunVox, `nm-connection-editor` for Wi-Fi, `blueman-manager` for Bluetooth, brightness/volume, touch calibration, lock and power actions.
+- `Mod1+h` (Alt+H) toggles the launcher menu. `Mod1+Tab` and `Ctrl+Tab` cycle windows, `Mod1+Return` opens the terminal, `Mod1+p` opens `dmenu_run`, `Mod1+f` opens the file manager, `Mod1+e` opens the editor, `Ctrl+Q` closes the focused window. `Mod1+equal`/`Mod1+minus` change the backlight.
 - The upstream `i3` session is still installed. To go back to it, edit `~/.xinitrc` and replace `awesome` with `i3`.
 - `pocketchip-batt` is compiled into the image and its unit is installed, but it is **not enabled**: on a mainline kernel `upower` already reports the AXP209 battery through the kernel driver, and the daemon writes to the same I2C device. Enable it manually with `sudo systemctl enable --now pocketchip-one` if you need the legacy `/usr/lib/pocketchip-batt` files.
 - PICO-8 and SunVox are proprietary binaries downloaded from their upstream URLs at build time. They are not redistributed by this repository.

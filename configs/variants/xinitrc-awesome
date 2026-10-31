@@ -1,5 +1,5 @@
 #!/bin/sh
-# PocketCHIP variant: awesome hosts the pocketchip-menu home screen.
+# PocketCHIP variant: awesome with the wibar launcher.
 
 if [ -r /etc/default/pocketchip-ui ]; then
   # shellcheck disable=SC1091
@@ -25,6 +25,21 @@ xset dpms 600 600 600 2>/dev/null || true
 
 if command -v unclutter >/dev/null 2>&1; then
   unclutter -idle 1 -root &
+fi
+
+# Mousepad follows the dark desktop with a readable mono font.
+if command -v gsettings >/dev/null 2>&1; then
+  gsettings set org.xfce.mousepad.preferences.view font-name 'Terminus 10' 2>/dev/null || true
+  gsettings set org.xfce.mousepad.preferences.view show-line-numbers true 2>/dev/null || true
+  gsettings set org.xfce.mousepad.preferences.view color-scheme 'oblivion' 2>/dev/null || true
+fi
+
+# Tray icons for the Wi-Fi and Bluetooth settings in the wibar.
+if command -v nm-applet >/dev/null 2>&1; then
+  nm-applet --indicator >/dev/null 2>&1 &
+fi
+if command -v blueman-applet >/dev/null 2>&1; then
+  blueman-applet >/dev/null 2>&1 &
 fi
 
 exec awesome

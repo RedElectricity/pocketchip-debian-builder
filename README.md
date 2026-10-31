@@ -138,7 +138,7 @@ make publish-check
 
 ## Image Variants
 
-This fork ships two CI-built flavours: a PocketCHIP image with [awesome](https://awesomewm.org/) plus [pocketchip-menu](https://github.com/omgmog/pocketchip-menu) as the home screen, PICO-8 and SunVox, and a Desktop CHIP image with XFCE on the HDMI adapter. `.github/workflows/build.yml` builds both on GitHub Actions and publishes the USB rootfs image, U-Boot and DTBs. See `docs/variants.md` for the build matrix, variant details, flashing steps, and the macOS FEL caveat.
+This fork ships two CI-built flavours: a PocketCHIP image with [awesome](https://awesomewm.org/) and a wibar launcher for the terminal, file manager, editor, Wi-Fi, Bluetooth and settings apps, plus PICO-8 and SunVox, and a Desktop CHIP image with XFCE on the HDMI adapter. `.github/workflows/build.yml` builds both on GitHub Actions and publishes the USB rootfs image, U-Boot and DTBs. See `docs/variants.md` for the build matrix, variant details, flashing steps, and the macOS FEL caveat.
 
 ## Project Layout
 
@@ -159,11 +159,11 @@ This fork ships two CI-built flavours: a PocketCHIP image with [awesome](https:/
 - Boot: mainline U-Boot for FEL/USB bring-up with USB rootfs by label
   `pocketroot`; patched legacy CHIP U-Boot for the experimental NAND/SLC rescue
   installer path.
-- UI: Xorg plus `i3`
-- Terminal: Sakura/VTE by default through `pocketchip-terminal`, with optional
-  xterm fallback when xterm is manually installed. `xterm` is intentionally not
-  part of the default image because Sakura gives better Unicode/TUI behavior on
-  the PocketCHIP display.
+- UI: Xorg plus `awesome` with a wibar launcher; `i3` remains as a fallback session
+- Terminal: rxvt-unicode (urxvt) through `pocketchip-terminal`, starting far
+  faster than a GTK/VTE terminal on the R8. The font list falls back from
+  Terminus to Unifont for CJK and box-drawing glyphs. `xterm` is not installed;
+  if installed manually, the wrapper uses it as a recovery fallback.
 - Userland: `zsh`, Oh My Zsh, `tmux`, `neovim`, Powerline/Font Awesome/Unifont
   terminal glyph coverage, and basic CLI/admin tools
 - Network: NetworkManager, OpenSSH server/client (the server is enabled at boot), autossh, mosh, bluez, and

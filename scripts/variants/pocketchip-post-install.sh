@@ -12,31 +12,12 @@ extras=/opt/pocketchip-extras
 
 export DEBIAN_FRONTEND=noninteractive
 
-# --- pocketchip-menu as the home screen -------------------------------------
-rm -rf "$home/pocketchip-menu"
-cp -a "$extras/pocketchip-menu" "$home/pocketchip-menu"
-cp -a "$extras/apps/." "$home/pocketchip-menu/apps/"
-sed -i "s#/home/chip/pocketchip-menu#$home/pocketchip-menu#g" "$home/pocketchip-menu/load.sh"
-chmod 0755 "$home/pocketchip-menu/load.sh"
-
 install -d -m 0755 "$home/.config/awesome"
 sed "s#@HOME@#$home#g" "$extras/awesome/rc.lua" > "$home/.config/awesome/rc.lua"
 chmod 0644 "$home/.config/awesome/rc.lua"
 install -m 0644 "$extras/awesome/blank_ptr.xbm" "$home/.config/awesome/blank_ptr.xbm"
 
 install -m 0755 "$extras/xinitrc-awesome" "$home/.xinitrc"
-
-cat > /usr/local/bin/pocket-home <<EOF
-#!/bin/sh
-exec "$home/pocketchip-menu/load.sh"
-EOF
-chmod 0755 /usr/local/bin/pocket-home
-
-# Keep the i3 fallback session usable: point its menu key at the new home.
-if [[ -f "$home/.config/i3/config" ]]; then
-  sed -i 's#exec --no-startup-id pocketchip-menu$#exec --no-startup-id pocket-home#' \
-    "$home/.config/i3/config"
-fi
 
 # --- PICO-8 -----------------------------------------------------------------
 install -d -m 0755 /usr/lib/pico-8
@@ -67,7 +48,7 @@ d /run/pocketchip-batt 0777 root root -
 L /usr/lib/pocketchip-batt - - - - /run/pocketchip-batt
 EOF
 
-chown -R "$(id -u "$user"):$(id -g "$user")" "$home/pocketchip-menu" \
+chown -R "$(id -u "$user"):$(id -g "$user")" \
   "$home/.config/awesome" "$home/.xinitrc"
 
 rm -rf "$extras"
