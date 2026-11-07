@@ -65,6 +65,11 @@ trap 'rm -rf "$work"' EXIT
 install -d "$out/lxde/applications"
 install -m 0644 "$repo_root/configs/variants/lxpanel-panel" "$out/lxde/panel"
 install -m 0755 "$repo_root/configs/variants/xinitrc-lxde" "$out/xinitrc-lxde"
+install -m 0755 "$repo_root/configs/variants/startlxde" "$out/lxde/startlxde"
+install -m 0644 "$repo_root/configs/variants/lxsession-desktop.conf" \
+  "$out/lxde/lxsession-desktop.conf"
+install -m 0644 "$repo_root/configs/variants/lxsession-autostart" \
+  "$out/lxde/lxsession-autostart"
 install -m 0644 "$repo_root/configs/variants/gtkrc-2.0" "$out/lxde/gtkrc-2.0"
 install -m 0644 "$repo_root/configs/variants/gtk-3.0/settings.ini" "$out/lxde/settings.ini"
 cp -a "$repo_root/configs/variants/applications/." "$out/lxde/applications/"

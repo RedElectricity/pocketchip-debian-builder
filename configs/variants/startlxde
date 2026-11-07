@@ -1,0 +1,8 @@
+#!/bin/sh
+# PocketCHIP replacement for startlxde.
+#
+# Debian 13's lxde-common no longer installs /usr/bin/startlxde, so the image
+# ships this wrapper. It selects the LXDE profile explicitly: without -s,
+# lxsession looks for a per-user profile, finds none, and exits after starting
+# no window manager, panel or desktop at all.
+exec lxsession -s LXDE -e LXDE

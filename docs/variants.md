@@ -117,7 +117,7 @@ Make sure `~/.local/bin` is on `PATH`, then verify with `sunxi-fel` (it prints u
 
 ### PocketCHIP
 
-- `~/.xinitrc` starts LXDE (`startlxde`). The bottom lxpanel is 28 px high with 24 px icons: application menu, quick-launch buttons for Terminal, PCManFM, Mousepad and Optional toolkits, the task list, the Wi-Fi/Bluetooth tray and the clock. The menu also exposes PICO-8, SunVox, brightness/volume and the LXDE settings tools.
+- `~/.xinitrc` starts LXDE through the image's own `/usr/local/bin/startlxde`. Debian 13's `lxde-common` no longer ships that wrapper or an LXDE session profile, and a bare `lxsession` starts no window manager at all; the profile lives in `/etc/xdg/lxsession/LXDE/` (`desktop.conf` selects Openbox, `autostart` launches `lxpanel`, `pcmanfm --desktop`, `nm-applet` and `blueman-applet`). The bottom lxpanel is 28 px high with 24 px icons: application menu, quick-launch buttons for Terminal, PCManFM, Mousepad and Optional toolkits, the task list, the Wi-Fi/Bluetooth tray and the clock. The menu also exposes PICO-8, SunVox, brightness/volume and the LXDE settings tools.
 - Touch calibration, lock, reboot and power off stay available through `pocketchip-touch-calibrate`, `i3lock` and `pocketchip-power`; the panel menu has Run and Logout entries.
 - The `i3` session is still installed as a fallback. To use it, edit `~/.xinitrc` and replace `startlxde` with `i3`.
 - `pocketchip-batt` is compiled into the image and its unit is installed, but it is **not enabled**: on a mainline kernel `upower` already reports the AXP209 battery through the kernel driver, and the daemon writes to the same I2C device. Enable it manually with `sudo systemctl enable --now pocketchip-one` if you need the legacy `/usr/lib/pocketchip-batt` files.

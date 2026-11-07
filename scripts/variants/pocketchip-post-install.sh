@@ -31,6 +31,16 @@ fi
 
 install -m 0755 "$extras/xinitrc-lxde" "$home/.xinitrc"
 
+# Debian 13's lxde-common ships neither /usr/bin/startlxde nor an LXDE
+# session profile, so install both here. Without the profile lxsession starts
+# no window manager and Xorg shows only its root window.
+install -m 0755 "$extras/lxde/startlxde" /usr/local/bin/startlxde
+install -d -m 0755 /etc/xdg/lxsession/LXDE
+install -m 0644 "$extras/lxde/lxsession-desktop.conf" \
+  /etc/xdg/lxsession/LXDE/desktop.conf
+install -m 0644 "$extras/lxde/lxsession-autostart" \
+  /etc/xdg/lxsession/LXDE/autostart
+
 # --- PICO-8 -----------------------------------------------------------------
 install -d -m 0755 /usr/lib/pico-8
 cp -a "$extras/pico-8/." /usr/lib/pico-8/

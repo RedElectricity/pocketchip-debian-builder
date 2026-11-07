@@ -98,7 +98,7 @@ The default image uses rxvt-unicode (urxvt) through the `pocketchip-terminal` wr
 
 ## LXDE Desktop
 
-The default PocketCHIP session is LXDE: Openbox plus a 28 px bottom lxpanel with 24 px icons. The panel has the application menu, quick-launch buttons for Terminal, PCManFM, Mousepad and Optional toolkits, the task list, the Wi-Fi/Bluetooth tray and a clock. The application menu also exposes PICO-8, SunVox, brightness/volume and the LXDE settings tools. The panel is configured in `~/.config/lxpanel/LXDE/panels/panel`; `~/.xinitrc` runs `startlxde`.
+The default PocketCHIP session is LXDE: Openbox plus a 28 px bottom lxpanel with 24 px icons. The panel has the application menu, quick-launch buttons for Terminal, PCManFM, Mousepad and Optional toolkits, the task list, the Wi-Fi/Bluetooth tray and a clock. The application menu also exposes PICO-8, SunVox, brightness/volume and the LXDE settings tools. The panel is configured in `~/.config/lxpanel/LXDE/panels/panel`; `~/.xinitrc` runs `/usr/local/bin/startlxde`, which execs `lxsession -s LXDE -e LXDE` against the profile in `/etc/xdg/lxsession/LXDE/`. Debian 13 no longer provides that wrapper or profile, so both are installed by the image.
 
 Openbox keeps its standard bindings; on the PocketCHIP keyboard the useful ones are:
 

@@ -1,0 +1,7 @@
+# Programs lxsession starts with the LXDE session.
+#
+# The panel and the desktop are autostart entries, not lxsession built-ins, so
+# they have to be listed here. nm-applet and blueman-applet are not listed:
+# both ship /etc/xdg/autostart entries, which lxsession already runs.
+@lxpanel --profile LXDE
+@pcmanfm --desktop --profile LXDE

@@ -47,15 +47,30 @@ if command -v gsettings >/dev/null 2>&1; then
   gsettings set org.xfce.mousepad.preferences.view color-scheme 'oblivion' 2>/dev/null || true
 fi
 
-# Tray icons for the Wi-Fi and Bluetooth settings.
+# Start the LXDE session. lxde-common in Debian 13 no longer installs
+# startlxde or an LXDE session profile, so the image ships its own wrapper and
+# /etc/xdg/lxsession/LXDE profile. A bare `lxsession` without -s finds no
+# profile and starts no window manager, which leaves Xorg with only its root
+# window.
+if command -v startlxde >/dev/null 2>&1; then
+  exec startlxde
+fi
+if command -v lxsession >/dev/null 2>&1; then
+  exec lxsession -s LXDE -e LXDE
+fi
+
+# Last resort: no session manager at all. Start the pieces by hand and keep
+# Openbox in the foreground.
 if command -v nm-applet >/dev/null 2>&1; then
   nm-applet --indicator >/dev/null 2>&1 &
 fi
 if command -v blueman-applet >/dev/null 2>&1; then
   blueman-applet >/dev/null 2>&1 &
 fi
-
-if command -v startlxde >/dev/null 2>&1; then
-  exec startlxde
+if command -v pcmanfm >/dev/null 2>&1; then
+  pcmanfm --desktop --profile LXDE >/dev/null 2>&1 &
 fi
-exec lxsession -e LXDE
+if command -v lxpanel >/dev/null 2>&1; then
+  lxpanel --profile LXDE >/dev/null 2>&1 &
+fi
+exec openbox
