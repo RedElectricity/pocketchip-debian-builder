@@ -83,6 +83,16 @@ Plugin {
 }
 
 Plugin {
+  type=batt
+  Config {
+    BatteryNumber=0
+    HideIfNoBattery=1
+    AlarmTime=5
+    ShowExtendedInformation=1
+  }
+}
+
+Plugin {
   type=dclock
   Config {
     ClockFmt=%R
