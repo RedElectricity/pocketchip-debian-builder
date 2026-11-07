@@ -1,0 +1,28 @@
+/* Touch-sized controls for the 480x272 resistive panel. Adwaita's defaults
+ * target a mouse: tiny scrollbar sliders and compact buttons are hard to hit
+ * with a fingertip. */
+
+scrollbar {
+  min-width: 16px;
+  min-height: 16px;
+}
+
+scrollbar slider {
+  min-width: 20px;
+  min-height: 20px;
+  border-radius: 7px;
+}
+
+button {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 4px 10px;
+}
+
+entry {
+  min-height: 30px;
+}
+
+menuitem {
+  min-height: 30px;
+}

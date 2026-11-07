@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Screenshot
+Comment=Save a screenshot to ~/Pictures/Screenshots
+Exec=pocketchip-screenshot
+Icon=camera-photo
+Terminal=false
+Categories=Utility;

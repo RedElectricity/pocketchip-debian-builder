@@ -17,19 +17,68 @@ install -m 0644 "$extras/lxde/panel" "$home/.config/lxpanel/LXDE/panels/panel"
 install -m 0644 "$extras/lxde/gtkrc-2.0" "$home/.gtkrc-2.0"
 install -d -m 0755 "$home/.config/gtk-3.0"
 install -m 0644 "$extras/lxde/settings.ini" "$home/.config/gtk-3.0/settings.ini"
+install -m 0644 "$extras/lxde/gtk.css" "$home/.config/gtk-3.0/gtk.css"
+
+# Openbox takes the titlebar button size from the xbm masks; the PocketCHIP
+# theme ships 24x24 ones so close/maximize/iconify stay tappable.
+install -d -m 0755 /usr/share/themes
+cp -a "$extras/lxde/themes/PocketCHIP" /usr/share/themes/
 
 install -d -m 0755 /usr/share/applications
 install -m 0644 "$extras/lxde/applications/"*.desktop /usr/share/applications/
 
+# Openbox reads a single rc.xml, so start from the packaged default (keeping
+# its keybindings) and switch the theme, touch-sized titlebar layout and the
+# drag/double-click thresholds. The default titlebar has 8 px buttons.
+if [ -f /etc/xdg/openbox/rc.xml ]; then
+  install -d -m 0755 "$home/.config/openbox"
+  for source in /etc/xdg/openbox/lxde-rc.xml /etc/xdg/openbox/rc.xml; do
+    [ -f "$source" ] || continue
+    target="$home/.config/openbox/$(basename "$source")"
+    sed \
+      -e 's|<name>Clearlooks</name>|<name>PocketCHIP</name>|' \
+      -e 's|<titleLayout>NLIMC</titleLayout>|<titleLayout>NIMC</titleLayout>|' \
+      -e 's|<dragThreshold>8</dragThreshold>|<dragThreshold>12</dragThreshold>|' \
+      -e 's|<doubleClickTime>200</doubleClickTime>|<doubleClickTime>350</doubleClickTime>|' \
+      -e 's|<name>sans</name>|<name>Terminus</name>|g' \
+      -e 's|<size>8</size>|<size>10</size>|g' \
+      -e 's|<size>9</size>|<size>10</size>|g' \
+      "$source" > "$target"
+    grep -q '<name>PocketCHIP</name>' "$target" || {
+      printf 'error: could not select the PocketCHIP Openbox theme in %s\n' "$source" >&2
+      exit 1
+    }
+  done
+fi
+
 # LXDE starts the desktop instance with --profile LXDE, so mirror the file
-# manager defaults there as well (single click, 480x252 windows).
-install -d -m 0755 "$home/.config/pcmanfm/LXDE"
+# manager defaults there as well (single click, 480x252 windows) and point the
+# desktop at the shipped wallpaper.
+install -d -m 0755 "$home/.config/pcmanfm/LXDE" "$home/Pictures"
+install -m 0644 "$extras/lxde/pocketchip-wallpaper.png" \
+  "$home/Pictures/pocketchip-wallpaper.png"
 if [ -f "$home/.config/pcmanfm/default/pcmanfm.conf" ]; then
   install -m 0644 "$home/.config/pcmanfm/default/pcmanfm.conf" \
     "$home/.config/pcmanfm/LXDE/pcmanfm.conf"
 fi
+cat >> "$home/.config/pcmanfm/LXDE/pcmanfm.conf" <<EOF
+
+[desktop]
+wallpaper_mode=stretch
+wallpaper_common=0
+wallpaper=$home/Pictures/pocketchip-wallpaper.png
+desktop_bg=#32302f
+desktop_fg=#ebdbb2
+desktop_shadow=#000000
+show_wallpaper=1
+show_documents=0
+show_trash=1
+show_mounts=1
+EOF
 
 install -m 0755 "$extras/xinitrc-lxde" "$home/.xinitrc"
+install -m 0755 "$extras/bin/pocketchip-screenshot" \
+  /usr/local/bin/pocketchip-screenshot
 
 # Debian 13's lxde-common ships neither /usr/bin/startlxde nor an LXDE
 # session profile, so install both here. Without the profile lxsession starts
@@ -72,7 +121,7 @@ EOF
 
 chown -R "$(id -u "$user"):$(id -g "$user")" \
   "$home/.config/lxpanel" "$home/.config/gtk-3.0" "$home/.config/pcmanfm" \
-  "$home/.gtkrc-2.0" "$home/.xinitrc"
+  "$home/.config/openbox" "$home/Pictures" "$home/.gtkrc-2.0" "$home/.xinitrc"
 
 rm -rf "$extras"
 

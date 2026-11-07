@@ -27,6 +27,25 @@ libgles2
 pcmanfm
 mousepad
 
+# Everyday touch-friendly utilities: calculator, image viewer, archive
+# manager, task manager, sticky notes, PDF viewer, screenshots and window
+# control. They are all menu entries, so they do not consume panel width.
+galculator
+gpicview
+lxtask
+scrot
+wmctrl
+xarchiver
+x11-utils
+xpad
+zathura
+zathura-pdf-poppler
+
+# Removable media, trash and mount handling for pcmanfm.
+gvfs
+gvfs-fuse
+udisks2
+
 # The security and OSINT toolkits are not part of the default image: they made
 # the NAND rootfs unnecessarily large on a device that also carries PICO-8 and
 # SunVox. `pocketchip-toolkits` installs them on demand, in groups, from the

@@ -1,0 +1,16 @@
+#!/bin/sh
+# Save a full-screen screenshot to ~/Pictures/Screenshots and confirm it with
+# a short dialog. Bound to the Screenshot entry in the LXDE menu.
+set -eu
+
+dir="${POCKETCHIP_SCREENSHOT_DIR:-$HOME/Pictures/Screenshots}"
+mkdir -p "$dir"
+file="$dir/pocketchip-$(date +%Y%m%d-%H%M%S).png"
+
+scrot -o "$file"
+
+if command -v xmessage >/dev/null 2>&1; then
+  xmessage -timeout 2 -center "Saved to $file" >/dev/null 2>&1 || true
+else
+  printf 'saved %s\n' "$file"
+fi

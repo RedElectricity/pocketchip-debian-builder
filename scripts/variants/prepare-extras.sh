@@ -72,6 +72,14 @@ install -m 0644 "$repo_root/configs/variants/lxsession-autostart" \
   "$out/lxde/lxsession-autostart"
 install -m 0644 "$repo_root/configs/variants/gtkrc-2.0" "$out/lxde/gtkrc-2.0"
 install -m 0644 "$repo_root/configs/variants/gtk-3.0/settings.ini" "$out/lxde/settings.ini"
+install -m 0644 "$repo_root/configs/variants/gtk-3.0/gtk.css" "$out/lxde/gtk.css"
+install -d "$out/lxde/themes"
+cp -a "$repo_root/configs/variants/openbox-theme/." "$out/lxde/themes/"
+install -m 0644 "$repo_root/configs/variants/assets/pocketchip-wallpaper.png" \
+  "$out/lxde/pocketchip-wallpaper.png"
+install -d "$out/bin"
+install -m 0755 "$repo_root/configs/variants/pocketchip-screenshot" \
+  "$out/bin/pocketchip-screenshot"
 cp -a "$repo_root/configs/variants/applications/." "$out/lxde/applications/"
 
 install -d "$out/bin"

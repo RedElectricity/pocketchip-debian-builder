@@ -1,5 +1,6 @@
-# PocketCHIP GTK2 defaults: dark palette, compact Terminus text.
+# PocketCHIP GTK2 defaults: dark palette, Terminus at a size that stays
+# tappable on the 480x272 panel.
 gtk-theme-name="Adwaita"
 gtk-icon-theme-name="Adwaita"
-gtk-font-name="Terminus 9"
+gtk-font-name="Terminus 10"
 gtk-cursor-theme-name="Adwaita"

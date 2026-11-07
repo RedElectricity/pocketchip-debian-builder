@@ -1,0 +1,57 @@
+# PocketCHIP Openbox theme: dark Gruvbox-like palette and 24 px titlebar
+# buttons, sized for fingers on the 480x272 resistive panel. Openbox takes the
+# button size from the xbm masks in this directory, so close.xbm, max.xbm,
+# iconify.xbm and menu.xbm are 24x24.
+padding.width: 3
+padding.height: 3
+border.width: 1
+window.client.padding.width: 0
+window.client.padding.height: 0
+window.handle.width: 0
+
+window.active.border.color: #504945
+window.inactive.border.color: #3c3836
+window.active.title.bg: Solid Flat
+window.active.title.bg.color: #3c3836
+window.inactive.title.bg: Solid Flat
+window.inactive.title.bg.color: #32302f
+window.active.label.text.color: #ebdbb2
+window.inactive.label.text.color: #928374
+window.label.text.justify: left
+
+window.active.button.unpressed.bg: parentrelative
+window.active.button.hover.bg: Solid Flat
+window.active.button.hover.bg.color: #504945
+window.active.button.pressed.bg: Solid Flat
+window.active.button.pressed.bg.color: #665c54
+window.inactive.button.unpressed.bg: parentrelative
+window.active.button.unpressed.image.color: #ebdbb2
+window.active.button.hover.image.color: #fabd2f
+window.active.button.pressed.image.color: #fabd2f
+window.active.button.disabled.image.color: #665c54
+window.inactive.button.unpressed.image.color: #928374
+window.inactive.button.disabled.image.color: #504945
+
+menu.bg: Solid Flat
+menu.bg.color: #282828
+menu.border.color: #504945
+menu.border.width: 1
+menu.title.bg: Solid Flat
+menu.title.bg.color: #3c3836
+menu.title.text.color: #ebdbb2
+menu.items.bg: Solid Flat
+menu.items.bg.color: #282828
+menu.items.text.color: #ebdbb2
+menu.items.active.bg: Solid Flat
+menu.items.active.bg.color: #504945
+menu.items.active.text.color: #fabd2f
+menu.separator.color: #504945
+menu.separator.width: 1
+menu.separator.padding.width: 6
+menu.separator.padding.height: 4
+
+osd.bg: Solid Flat
+osd.bg.color: #282828
+osd.border.color: #504945
+osd.border.width: 1
+osd.label.text.color: #ebdbb2

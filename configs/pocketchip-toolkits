@@ -10,9 +10,10 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 export DEBIAN_FRONTEND=noninteractive
 
-groups="browser net wireless forensics web osint pentest"
+groups="browser media net wireless forensics web osint pentest"
 
 packages_browser="firefox-esr netsurf-gtk"
+packages_media="mpv yt-dlp"
 packages_net="arping hping3 masscan p0f tcpflow sslscan testssl.sh python3-scapy"
 packages_wireless="aircrack-ng hcxdumptool hcxtools macchanger"
 packages_forensics="binwalk foremost upx-ucl yara john"
@@ -30,6 +31,7 @@ Usage:
 
 Groups:
   browser    netsurf-gtk (light) and firefox-esr (full)
+  media      mpv playback and yt-dlp for offline media
   net        packet, port and TLS auditing tools
   wireless   Wi-Fi capture and monitor-mode tools
   forensics  firmware, file carving and binary analysis
@@ -46,6 +48,7 @@ EOF
 group_packages() {
   case "$1" in
     browser) printf '%s\n' "$packages_browser" ;;
+    media) printf '%s\n' "$packages_media" ;;
     net) printf '%s\n' "$packages_net" ;;
     wireless) printf '%s\n' "$packages_wireless" ;;
     forensics) printf '%s\n' "$packages_forensics" ;;
@@ -59,6 +62,7 @@ group_packages() {
 group_description() {
   case "$1" in
     browser) printf '%s\n' 'netsurf-gtk and firefox-esr' ;;
+    media) printf '%s\n' 'mpv playback and yt-dlp' ;;
     net) printf '%s\n' 'packet, port and TLS auditing' ;;
     wireless) printf '%s\n' 'Wi-Fi capture and monitor mode' ;;
     forensics) printf '%s\n' 'firmware, carving and binary analysis' ;;
