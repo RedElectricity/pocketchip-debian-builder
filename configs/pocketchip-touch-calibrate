@@ -11,14 +11,14 @@ output="${POCKETCHIP_TOUCH_OUTPUT:-}"
 
 matrix_for() {
   case "$1" in
-    apply|stylus) printf '%s\n' "${POCKETCHIP_TOUCH_MATRIX:--1 0 1 0 -1.18 1.09 0 0 1}" ;;
-    edge-fit) printf '%s\n' '-1 0 1 0 -1.18 1.09 0 0 1' ;;
+    apply|stylus) printf '%s\n' "${POCKETCHIP_TOUCH_MATRIX:--1.2093 -0.0148 1.1011 -0.0078 -1.4173 1.1579 0 0 1}" ;;
+    edge-fit) printf '%s\n' '-1.2093 -0.0148 1.1011 -0.0078 -1.4173 1.1579 0 0 1' ;;
     identity) printf '%s\n' '1 0 0 0 1 0 0 0 1' ;;
     invert-x) printf '%s\n' '-1 0 1 0 1 0 0 0 1' ;;
     invert-y) printf '%s\n' '1 0 0 0 -1 1 0 0 1' ;;
     invert-xy|rotate-180) printf '%s\n' '-1 0 1 0 -1 1 0 0 1' ;;
     edge-fit-x) printf '%s\n' '-1.10 0 1.05 0 -1 1 0 0 1' ;;
-    edge-fit-y) printf '%s\n' '-1 0 1 0 -1.18 1.09 0 0 1' ;;
+    edge-fit-y) printf '%s\n' '-1.2093 -0.0148 1.1011 -0.0078 -1.4173 1.1579 0 0 1' ;;
     edge-fit-strong) printf '%s\n' '-1.10 0 1.05 0 -1.24 1.12 0 0 1' ;;
     swap-xy) printf '%s\n' '0 1 0 1 0 0 0 0 1' ;;
     swap-xy-invert-x) printf '%s\n' '0 1 0 -1 0 1 0 0 1' ;;

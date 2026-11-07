@@ -162,7 +162,7 @@ POCKETCHIP_WIFI_PSK='your-password'
 POCKETCHIP_WIFI_HIDDEN=0
 POCKETCHIP_WIFI_COUNTRY=US
 POCKETCHIP_SPECTRE_V2_MITIGATION=1
-POCKETCHIP_TOUCH_MATRIX='-1 0 1 0 -1.18 1.09 0 0 1'
+POCKETCHIP_TOUCH_MATRIX='-1.2093 -0.0148 1.1011 -0.0078 -1.4173 1.1579 0 0 1'
 POCKETCHIP_TOUCH_OUTPUT=
 POCKETCHIP_ASSET_DIR='.local/chip-assets'
 # POCKETCHIP_BG_IMAGE=bg.png
@@ -466,10 +466,7 @@ pocketchip-touch-calibrate learn-edges
 pocketchip-touch-calibrate status
 ```
 
-The current default is `invert-xy`, which corrects the observed 180-degree
-inversion on the PocketCHIP panel. If a future build behaves differently, use
-the calibration menu or `learn-edges` to find the correct matrix, then persist it in
-`configs/local.env` with `POCKETCHIP_TOUCH_MATRIX='...'` and rebuild the image.
+The default starts from `invert-xy` (the panel is wired 180 degrees from the LCD) and adds the scale and small rotation measured by touching the four visible screen corners on a real PocketCHIP: the axes need about 1.21x/1.42x gain and the LCD corners sit at roughly 9%/18% inset in the raw range, so a pure flip leaves the right and bottom edges unreachable. If a future build behaves differently, use the calibration menu or `learn-edges` to find a matrix, then persist it in `configs/local.env` with `POCKETCHIP_TOUCH_MATRIX='...'` and rebuild the image. `learn-edges` samples the physical panel edges, which extend past the LCD, so prefer the four-corner method and verify the center before adopting its result.
 
 Browser use is optimized for keyboard plus gestures. Horizontal gestures map to
 back/forward in Firefox, vertical gestures map to page up/down, and precise edge
