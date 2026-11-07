@@ -1,0 +1,25 @@
+// The PocketCHIP boots straight into a passwordless desktop account, so a
+// polkit authentication prompt can never be answered. Allow the local active
+// user to power the machine off, reboot and suspend without one; the same user
+// already has physical access to the device.
+polkit.addRule(function(action, subject) {
+  if (!subject.local || !subject.active) {
+    return;
+  }
+
+  var id = action.id;
+  if (id === "org.freedesktop.login1.power-off" ||
+      id === "org.freedesktop.login1.power-off-multiple-sessions" ||
+      id === "org.freedesktop.login1.power-off-ignore-inhibitors" ||
+      id === "org.freedesktop.login1.reboot" ||
+      id === "org.freedesktop.login1.reboot-multiple-sessions" ||
+      id === "org.freedesktop.login1.reboot-ignore-inhibitors" ||
+      id === "org.freedesktop.login1.suspend" ||
+      id === "org.freedesktop.login1.suspend-multiple-sessions" ||
+      id === "org.freedesktop.login1.suspend-ignore-inhibitors" ||
+      id === "org.freedesktop.login1.hibernate" ||
+      id === "org.freedesktop.login1.hibernate-multiple-sessions" ||
+      id === "org.freedesktop.login1.hibernate-ignore-inhibitors") {
+    return polkit.Result.YES;
+  }
+});

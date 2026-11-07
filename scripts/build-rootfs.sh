@@ -878,16 +878,19 @@ install -m 0644 "$repo_root/configs/fontconfig-pocketchip-terminal.conf" \
 
 install -d -m 0755 "$rootfs/etc/polkit-1/rules.d"
 install -m 0644 "$repo_root/configs/polkit-pocketchip-radios.rules" "$rootfs/etc/polkit-1/rules.d/50-pocketchip-radios.rules"
+install -m 0644 "$repo_root/configs/polkit-pocketchip-login1.rules" "$rootfs/etc/polkit-1/rules.d/50-pocketchip-login1.rules"
 
 install -d -m 0750 "$rootfs/etc/sudoers.d"
 install -m 0440 "$repo_root/configs/sudoers-pocketchip-startx" "$rootfs/etc/sudoers.d/pocketchip-startx"
 install -m 0440 "$repo_root/configs/sudoers-pocketchip-first-login" "$rootfs/etc/sudoers.d/pocketchip-first-login"
 install -m 0440 "$repo_root/configs/sudoers-pocketchip-power" "$rootfs/etc/sudoers.d/pocketchip-power"
 install -m 0440 "$repo_root/configs/sudoers-pocketchip-toolkits" "$rootfs/etc/sudoers.d/pocketchip-toolkits"
+install -m 0440 "$repo_root/configs/sudoers-pocketchip-user" "$rootfs/etc/sudoers.d/pocketchip-user"
 chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-startx
 chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-first-login
 chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-power
 chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-toolkits
+chroot "$rootfs" visudo -cf /etc/sudoers.d/pocketchip-user
 
 install -m 0644 "$repo_root/configs/pocketchip-keymap.service" "$rootfs/etc/systemd/system/pocketchip-keymap.service"
 install -d -m 0755 "$rootfs/etc/systemd/system/multi-user.target.wants"

@@ -1,0 +1,4 @@
+# The PocketCHIP boots into a passwordless single-user desktop, so sudo cannot
+# ask for a password. Members of pocketchip-setup (the chip account) get the
+# full administrator access a normal desktop user would have.
+%pocketchip-setup ALL=(ALL) NOPASSWD: ALL
