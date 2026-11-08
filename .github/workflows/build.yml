@@ -42,6 +42,8 @@ concurrency:
 
 env:
   POCKETCHIP_TIMEZONE: ${{ vars.POCKETCHIP_TIMEZONE || 'Asia/Shanghai' }}
+  POCKETCHIP_USER_PASSWORD: ${{ vars.POCKETCHIP_USER_PASSWORD }}
+  POCKETCHIP_AUTOLOGIN_TTY1: ${{ vars.POCKETCHIP_AUTOLOGIN_TTY1 || 'auto' }}
 
 jobs:
   plan:
@@ -142,6 +144,8 @@ jobs:
             POCKETCHIP_EXTRAS_DIR="$PWD/build/extras" \
             POCKETCHIP_POST_INSTALL="$PWD/scripts/variants/${VARIANT}-post-install.sh" \
             POCKETCHIP_TIMEZONE="$POCKETCHIP_TIMEZONE" \
+            POCKETCHIP_USER_PASSWORD="$POCKETCHIP_USER_PASSWORD" \
+            POCKETCHIP_AUTOLOGIN_TTY1="$POCKETCHIP_AUTOLOGIN_TTY1" \
             POCKETCHIP_IMAGE_PROFILE=balanced \
             ./scripts/build-rootfs.sh
 

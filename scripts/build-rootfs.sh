@@ -852,6 +852,7 @@ install -m 0644 "$repo_root/configs/tmpfiles-pocketchip-backlight.conf" "$rootfs
 install -d -m 0755 "$rootfs/etc/ssh/sshd_config.d"
 cat > "$rootfs/etc/ssh/sshd_config.d/50-pocketchip-root.conf" <<'EOF'
 PermitRootLogin no
+PasswordAuthentication yes
 EOF
 
 # openssh-server ships both ssh.service and ssh.socket. Enable the service
